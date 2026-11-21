@@ -53,15 +53,40 @@ Planer öffnen. Beim allerersten Aufruf erscheint «Admin-Konto erstellen». Nam
 Das geht nur ein einziges Mal. Danach sieht jeder nur noch die normale Anmeldung.
 
 ## Trainer hinzufügen
+**Variante A: Du erstellst das Login**
 1. Oben **Verwaltung** > **+ Login erstellen**.
 2. Name, Benutzername, Passwort (wird vorgeschlagen) und Jahrgänge ankreuzen.
 3. Die angezeigten Zugangsdaten kopieren und dem Trainer schicken.
 
+**Variante B: Einladungslink**
+1. **Verwaltung** > «Einladungslink für Trainer» > **Einladungslink erstellen** > Kopieren.
+2. Link an die Trainer schicken (z. B. im WhatsApp-Chat der Trainer).
+3. Die Trainer registrieren sich selbst mit Name, Benutzername und Passwort.
+4. Du siehst sie in der Verwaltung unter «Offene Registrierungen» > **Freischalten und zuteilen** > Jahrgänge ankreuzen > Speichern.
+Ein neuer Link macht den alten ungültig (z. B. wenn er in falsche Hände geraten ist).
+
+**Neue Kategorien:** jederzeit mit **+ Neue Gruppe** anlegen und den Trainern zuteilen.
+
+## KI-Unterstützung (freiwillig)
+Im Fenster «Neues Training»:
+1. **1. Prompt kopieren** (optional vorher einen Wunsch eintragen).
+2. Auf claude.ai (Gratis-Konto reicht) in einem neuen Chat einfügen und senden.
+3. Die ganze Antwort kopieren, im Planer **2. KI-Antwort einfügen** > einfügen > **Ins Formular übernehmen**.
+4. Prüfen, anpassen, speichern.
+Wer keine KI will, füllt das Formular einfach selbst aus. Dafür braucht es kein Claude-Konto.
+
 Zuteilung ändern oder Login sperren: in der Liste «Logins» auf **Bearbeiten**.
 Weitere Admins: beim Login die Rolle «Admin» wählen.
+
+## Updates einspielen
+Änderungen am Planer lässt du im Claude-Chat machen. Danach entweder
+- die neue `index.html` auf GitHub hochladen (Repository > **Add file > Upload files** > Datei ersetzen > Commit), oder
+- Claude direkt ins Repository schreiben lassen (dafür muss das Konto, mit dem Claude auf GitHub zugreift, Schreibrechte auf das Repository haben, z. B. als Collaborator).
+Die Daten in Firebase bleiben bei einem Update unverändert.
 
 ## Gut zu wissen
 - **Passwort vergessen:** Ein Admin kann fremde Passwörter in dieser Gratis-Variante nicht zurücksetzen. Lösung: altes Login entfernen und ein neues mit anderem Benutzernamen erstellen. Sein eigenes Passwort kann jeder oben rechts unter «👤» ändern.
 - **Login entfernen:** Der Zugang ist sofort weg. Der Benutzername bleibt aber reserviert und kann nicht neu vergeben werden.
+- **Backup:** Verwaltung > «Backup herunterladen» speichert alle Daten als Datei. Ab und zu machen.
 - **Kosten:** Der Gratis-Plan von Firebase (Spark) reicht für einen Verein bei weitem.
 - **Schulferien:** Hinterlegt bis Sommer 2028 (Quelle: zg.ch/schulferien). Spätere Jahre in `index.html` bei `HOLIDAYS` und `FREEDAYS` ergänzen.

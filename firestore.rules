@@ -20,6 +20,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Einladungscode für die Selbstregistrierung (nur Admins sehen ihn)
+    match /config/invite {
+      allow read, write: if isAdmin();
+    }
+
     // Vereinseinstellungen (Name, Logo)
     match /config/main {
       allow read: if active();
@@ -33,7 +38,16 @@ service cloud.firestore {
         || (signedIn() && request.auth.uid == uid && !setupDone()
             && request.resource.data.role == 'admin'
             && request.resource.data.active == true
-            && existsAfter(/databases/$(database)/documents/config/setup));
+            && existsAfter(/databases/$(database)/documents/config/setup))
+        // Selbstregistrierung über den Einladungslink: wartet auf Freischaltung durch einen Admin
+        || (signedIn() && request.auth.uid == uid && setupDone()
+            && request.resource.data.keys().hasOnly(['name','username','role','groups','active','pending','invite','createdAt'])
+            && request.resource.data.role == 'trainer'
+            && request.resource.data.active == false
+            && request.resource.data.pending == true
+            && request.resource.data.groups.size() == 0
+            && exists(/databases/$(database)/documents/config/invite)
+            && request.resource.data.invite == get(/databases/$(database)/documents/config/invite).data.code);
       allow update, delete: if isAdmin();
     }
 

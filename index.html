@@ -190,6 +190,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #9cbcec;border-color:v
 .utab td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
 .utab tr:last-child td{border-bottom:0}
 .utab tr.off td{opacity:.55}
+.pend{padding:16px;border-left:5px solid #f0b400}
 </style>
 </head>
 <body>
@@ -209,9 +210,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid #9cbcec;border-color:v
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updatePassword, reauthenticateWithCredential, EmailAuthProvider, inMemoryPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc as fsDoc, collection as fsCol, setDoc, deleteDoc, getDoc, onSnapshot as fsSnap, query, where, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc as fsDoc, collection as fsCol, setDoc, deleteDoc, getDoc, getDocs, onSnapshot as fsSnap, query, where, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { FIREBASE_CONFIG, USER_DOMAIN } from "./firebase-config.js";
 const BASE_URL = location.origin + location.pathname;
+/* Startgruppen, werden nur bei der ersten Einrichtung angelegt */
+const SEED_GROUPS = {"u16-k7m3px": {"color": "#0b4fa3", "days": [0, 1, 2, 3, 4], "duration": 90, "level": "", "location": "Leichtathletikanlage Herti", "name": "U16", "time": "18:00", "trainers": ["Marvin", "Safras", "Ramon", "Jani"], "years": "2011/2012"}, "u14-ga8sgb": {"color": "#862e9c", "days": [0, 1, 2, 3, 4], "duration": 90, "level": "", "location": "Leichtathletikanlage Herti", "name": "U14", "time": "18:00", "trainers": ["Florin", "Moni"], "years": ""}, "u20-und-alter-amcebz": {"color": "#2b8a3e", "days": [0, 1, 2, 3, 4, 5], "duration": 90, "level": "", "location": "Leichtathletikanlage Herti", "name": "U20 und älter", "time": "18:00", "trainers": ["Tobi", "Fabio", "Urs", "Jürg"], "years": "2011-offen"}};
 const DAYS = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
 const D2 = ["Mo","Di","Mi","Do","Fr","Sa","So"];
 const FOCI = ["Sprint","Hürden","Sprung","Wurf","Ausdauer","Kraft","Koordination","Beweglichkeit","Spiel","Wettkampf","Technik"];
@@ -302,7 +305,7 @@ function authErr(e){ const c=e&&e.code||""; console.warn(e);
   return "Fehler: " + (c||"unbekannt"); }
 
 (function boot(){
-  window.addEventListener("hashchange", ()=>{ if(S.profile) route(); });
+  window.addEventListener("hashchange", ()=>{ if(S.profile) route(); else if(S.view==="login" && /^#invite-/.test(location.hash)) showLogin(); });
   if(!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || /^DEIN/.test(FIREBASE_CONFIG.apiKey)){
     $("#app").innerHTML = `<div class="card empty"><h2>Einrichtung fehlt</h2><p>Bitte in der Datei <b>firebase-config.js</b> die Firebase-Konfiguration eintragen (siehe README).</p></div>`; return; }
   app = initializeApp(FIREBASE_CONFIG); auth = getAuth(app); fsdb = getFirestore(app); S.db = mkDb(fsdb);
@@ -316,6 +319,8 @@ async function showLogin(){
   $("#app").innerHTML = `<div class="empty"><span class="spin"></span></div>`;
   let setupDone=true; try{ setupDone=(await S.db.doc("config/setup").get()).exists; }catch(e){ console.warn(e); }
   const first=!setupDone;
+  const inv=(location.hash.match(/^#invite-([a-z0-9]+)$/i)||[])[1];
+  if(!first && inv){ showRegister(inv); return; }
   $("#app").innerHTML = `
   <div class="login card">
     <div class="hero-logo" style="margin:0 auto">${logoHtml()}</div>
@@ -341,6 +346,7 @@ async function showLogin(){
         b.set(fsDoc(fsdb,"config/setup"),{by:cred.user.uid, at:Date.now()});
         await b.commit();
         await setDoc(fsDoc(fsdb,"config/main"),{clubName:"LK Zug", updatedAt:Date.now()});
+        for(const [gid,g] of Object.entries(SEED_GROUPS)){ try{ await setDoc(fsDoc(fsdb,"groups/"+gid),{...g, createdAt:Date.now(), updatedAt:Date.now()}); }catch(e){ console.warn(e); } }
         S.settingUp=false;
       } else await signInWithEmailAndPassword(auth, emailOf(un), pw);
     }catch(e){ S.settingUp=false; console.warn(e); if(msg.isConnected){ msg.textContent=authErr(e); $("#lGo").disabled=false; } else { toast(authErr(e)); } }
@@ -348,11 +354,54 @@ async function showLogin(){
   $("#lGo").onclick=go; $("#lPw").onkeydown=e=>{ if(e.key==="Enter") go(); };
 }
 
+function showRegister(code){
+  $("#app").innerHTML = `
+  <div class="login card">
+    <div class="hero-logo" style="margin:0 auto">${logoHtml()}</div>
+    <h1 style="text-align:center;color:var(--blue);font-size:30px;text-transform:uppercase">Registrierung</h1>
+    <div class="note">Erstelle dein Trainer-Login. Danach schaltet dich der Admin frei und teilt dir deinen Jahrgang zu.</div>
+    <label class="f">Vorname und Nachname<input type="text" id="rName" autocomplete="name"></label>
+    <label class="f">Benutzername<input type="text" id="rUser" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="z. B. anna.muster"></label>
+    <div class="g2"><label class="f">Passwort<input type="password" id="rPw" autocomplete="new-password"></label>
+    <label class="f">Passwort wiederholen<input type="password" id="rPw2" autocomplete="new-password"></label></div>
+    <div id="rMsg" class="muted" style="font-size:14px;min-height:18px"></div>
+    <button class="btn pri" id="rGo" style="justify-content:center;padding:11px">Registrieren</button>
+    <a href="#" id="rLogin" style="text-align:center;font-size:14px">Ich habe schon ein Login</a>
+  </div>`;
+  $("#rLogin").onclick=e=>{ e.preventDefault(); location.hash=""; showLogin(); };
+  $("#rGo").onclick = async () => {
+    const nm=$("#rName").value.trim(), un=$("#rUser").value.trim().toLowerCase(), pw=$("#rPw").value, msg=$("#rMsg");
+    if(!nm){ msg.textContent="Bitte deinen Namen eingeben."; return; }
+    if(!/^[a-z0-9._-]{3,30}$/.test(un)){ msg.textContent="Benutzername: 3 bis 30 Zeichen, nur Kleinbuchstaben, Zahlen, Punkt, Bindestrich."; return; }
+    if(pw.length<6){ msg.textContent="Das Passwort muss mindestens 6 Zeichen haben."; return; }
+    if(pw!==$("#rPw2").value){ msg.textContent="Die Passwörter stimmen nicht überein."; return; }
+    $("#rGo").disabled=true; msg.textContent=""; S.settingUp=true;
+    let cred=null;
+    try{
+      cred=await createUserWithEmailAndPassword(auth, emailOf(un), pw);
+      await setDoc(fsDoc(fsdb,"users/"+cred.user.uid),{name:nm, username:un, role:"trainer", groups:[], active:false, pending:true, invite:code, createdAt:Date.now()});
+      S.settingUp=false; history.replaceState(null,"",location.pathname);
+      showPending();
+    }catch(e){
+      S.settingUp=false; console.warn(e);
+      if(cred){ try{ await cred.user.delete(); }catch(x){} }
+      const t = String(e&&e.code||"").startsWith("auth/") ? authErr(e) : "Der Einladungslink ist ungültig oder abgelaufen. Bitte beim Admin einen neuen Link verlangen.";
+      if(msg.isConnected){ msg.textContent=t; $("#rGo").disabled=false; } else toast(t);
+    }
+  };
+}
+function showPending(){
+  S.view="none"; renderHeader();
+  $("#app").innerHTML=`<div class="card empty"><h2>Danke für deine Registrierung</h2><p>Der Admin muss dich noch freischalten und deinem Jahrgang zuteilen. Danach kannst du dich hier mit deinem Benutzernamen und Passwort anmelden.</p><button class="btn" id="xOut">Abmelden</button></div>`;
+  $("#xOut").onclick=()=>signOut(auth);
+}
+
 function startSession(u){
   S.me=u.uid; S.view="loading"; $("#app").innerHTML=`<div class="empty"><span class="spin"></span> Laden…</div>`;
   S.subs.push(S.db.doc("users/"+u.uid).onSnapshot(s=>{
     const p = s.exists ? s.data() : null;
     if(!p && S.settingUp) return;
+    if(p && p.pending && p.active!==true){ S.profile=null; showPending(); return; }
     if(!p || p.active!==true){ S.profile=null; S.view="none"; renderHeader();
       $("#app").innerHTML=`<div class="card empty"><h2>Kein Zugang</h2><p>Dein Login ist nicht (mehr) aktiv. Bitte beim Admin melden.</p><button class="btn" id="xOut">Abmelden</button></div>`;
       $("#xOut").onclick=()=>signOut(auth); return; }
@@ -364,6 +413,7 @@ function startSession(u){
 function startData(){
   if(S.dataStarted) return; S.dataStarted=true;
   S.subs.push(S.db.doc("config/main").onSnapshot(s=>{ S.config = s.exists ? s.data() : {}; renderHeader(); if(S.view==="admin") renderAdmin(); if(S.view==="home") renderHome(); }, e=>console.warn(e)));
+  if(S.owner) S.subs.push(S.db.doc("config/invite").onSnapshot(s=>{ S.invite = s.exists ? s.data().code : null; if(S.view==="admin") renderAdmin(); }, e=>console.warn(e)));
   S.subs.push(S.db.collection("users").onSnapshot(s=>{ S.usersById={}; s.docs.forEach(d=>S.usersById[d.id]={id:d.id,...d.data()}); if(S.view==="admin") renderAdmin(); if(S.view==="home") renderHome(); }, e=>console.warn(e)));
 }
 function syncGroupSubs(){
@@ -436,6 +486,7 @@ function renderHome(){
       <div class="kicker">${esc(S.config.clubName||"LK Zug")}</div>
       <h1>Trainingsplaner</h1>
       <p class="muted">${S.owner?"Du bist Admin und siehst alle Trainingsgruppen.":"Wähle deine Trainingsgruppe."} Saison ${seasonLabel()}.</p>
+      ${S.owner&&Object.values(S.usersById).some(u=>u.pending&&!u.active)?`<div class="note warn" style="margin-top:10px">Es gibt offene Registrierungen. Bitte in der Verwaltung freischalten.</div>`:""}
       ${S.owner?`<div class="row" style="margin-top:10px"><button class="btn pri" id="hAdmin">Verwaltung</button><button class="btn" id="hNew">+ Neue Gruppe</button></div>`:""}
     </div>
   </section>
@@ -491,6 +542,15 @@ function renderAdmin(){
     </div>`).join("")}</div>`
   : `<div class="card empty"><h3>Noch keine Gruppen</h3><p>Lege die erste Trainingsgruppe an, z. B. «U16».</p></div>`}
 
+  ${pendingHtml()}
+  <div class="sec"><h3>Einladungslink für Trainer</h3>
+    <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div class="muted" style="font-size:14px">Mit diesem Link können sich Trainer selbst registrieren. Danach erscheinen sie oben bei «Offene Registrierungen», und du teilst ihnen den Jahrgang zu.</div>
+      ${S.invite?`<div class="linkbox"><input type="text" readonly id="invLink" value="${esc(BASE_URL+"#invite-"+S.invite)}"><button class="btn sm" id="invCopy">Kopieren</button></div>
+        <div><button class="btn sm danger" id="invNew">Neuen Link erzeugen (alter Link wird ungültig)</button></div>`
+      :`<div><button class="btn pri" id="invNew">Einladungslink erstellen</button></div>`}
+    </div>
+  </div>
   <div class="sec"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Logins</h3><button class="btn pri" id="newU">+ Login erstellen</button></div>
     ${usersTable()}
   </div>
@@ -509,16 +569,30 @@ function renderAdmin(){
     </div>
   </div>
 
+  <div class="sec"><h3>Backup</h3>
+    <div class="card" style="padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div class="muted" style="font-size:14px;flex:1;min-width:240px">Speichert alle Gruppen, Trainings, Logins (ohne Passwörter) und Einstellungen als Datei auf deinem Computer. Am besten ab und zu machen, z. B. einmal im Monat.</div>
+      <button class="btn pri" id="bkBtn">Backup herunterladen</button>
+    </div>
+  </div>
+
   <div class="sec"><h3>So gibst du Trainern Zugang</h3>
     <div class="note">1. Jahrgang anlegen (falls noch nicht vorhanden).<br>
-    2. «+ Login erstellen»: Name, Benutzername und Passwort festlegen und die Jahrgänge ankreuzen.<br>
-    3. Die angezeigten Zugangsdaten kopieren und dem Trainer schicken.<br>
+    2. Entweder «+ Login erstellen» (du legst Benutzername und Passwort fest und schickst die Zugangsdaten)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;oder den Einladungslink schicken: Der Trainer registriert sich selbst, du schaltest ihn unter «Offene Registrierungen» frei und kreuzt seine Jahrgänge an.<br>
+    3. Neue Kategorien jederzeit mit «+ Neue Gruppe» anlegen und den Trainern zuteilen.<br>
     4. Der Trainer meldet sich an und sieht nur seine Jahrgänge. Sein Passwort kann er unter «👤» selbst ändern.<br>
     Zuteilung ändern oder Login sperren: in der Liste «Logins» auf «Bearbeiten».</div>
   </div>`;
 
   $("#newG").onclick = () => groupModal(null);
   $("#newU").onclick = () => userModal(null);
+  $("#bkBtn").onclick = downloadBackup;
+  const ic=$("#invCopy"); if(ic) ic.onclick=async()=>{ if(!(await copyText($("#invLink").value))){ $("#invLink").select(); toast("Markiert, bitte mit Ctrl+C kopieren"); } };
+  const inb=$("#invNew"); inb.onclick=async()=>{
+    if(S.invite && !inb.classList.contains("armed")){ inb.classList.add("armed"); inb.textContent="Sicher? Der alte Link funktioniert danach nicht mehr."; return; }
+    try{ await S.db.doc("config/invite").set({code:rid(10), updatedAt:Date.now()}); toast("Einladungslink erstellt"); }catch(e){ toast(dbErr(e)); }
+  };
   document.querySelectorAll("[data-uedit]").forEach(b=>b.onclick=()=>userModal(b.dataset.uedit));
   document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>groupModal(b.dataset.edit));
   document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{ location.hash="g-"+b.dataset.open; });
@@ -541,8 +615,29 @@ function memberList(gid){
   if(!ms.length) return `<span class="muted">noch niemand zugeteilt</span>`;
   return ms.map(m=>`<span class="mchip">${esc(m.name||m.username)}<button title="Zuteilung entfernen" data-unjoin="${esc(m.id)}|${esc(gid)}">×</button></span>`).join(" ");
 }
+async function downloadBackup(){
+  const b=$("#bkBtn"); b.disabled=true; b.textContent="Wird erstellt…";
+  try{
+    const out={ app:"LK Zug Trainingsplaner", erstellt:new Date().toISOString(), collections:{} };
+    for(const c of ["config","groups","users","sessions"]){
+      const s=await getDocs(fsCol(fsdb,c)); out.collections[c]={}; s.forEach(d=>{ if(!(c==="config"&&d.id==="invite")) out.collections[c][d.id]=d.data(); });
+    }
+    const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`LKZ-Trainingsplaner-Backup_${iso(new Date())}.json`;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000);
+    toast("Backup heruntergeladen");
+  }catch(e){ toast(dbErr(e)); }
+  b.disabled=false; b.textContent="Backup herunterladen";
+}
+function pendingHtml(){
+  const ps=Object.values(S.usersById).filter(u=>u.pending && !u.active);
+  if(!ps.length) return "";
+  return `<div class="sec" style="margin-top:20px"><div class="card pend"><h3 style="font-size:22px;margin-bottom:8px">Offene Registrierungen (${ps.length})</h3>
+    ${ps.map(u=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)"><div><b>${esc(u.name||"")}</b> <span class="muted">${esc(u.username||"")} · ${u.createdAt?ch(new Date(u.createdAt)):""}</span></div>
+      <button class="btn sm pri" data-uedit="${esc(u.id)}">Freischalten und zuteilen</button></div>`).join("")}</div></div>`;
+}
 function usersTable(){
-  const us=Object.values(S.usersById).sort((a,b)=>(a.role===b.role?0:a.role==="admin"?-1:1)||(a.name||"").localeCompare(b.name||"","de"));
+  const us=Object.values(S.usersById).filter(u=>!(u.pending && !u.active)).sort((a,b)=>(a.role===b.role?0:a.role==="admin"?-1:1)||(a.name||"").localeCompare(b.name||"","de"));
   if(!us.length) return `<div class="card empty">Noch keine Logins.</div>`;
   return `<div class="card" style="overflow-x:auto"><table class="utab"><thead><tr><th>Name</th><th>Benutzername</th><th>Rolle</th><th>Jahrgänge</th><th>Status</th><th></th></tr></thead><tbody>
   ${us.map(u=>`<tr class="${u.active?"":"off"}"><td><b>${esc(u.name||"")}</b>${u.id===S.me?' <span class="muted">(du)</span>':""}</td><td>${esc(u.username||"")}</td>
@@ -564,7 +659,7 @@ function userModal(uid){
     ${ex?"":`<label class="f">Passwort<div class="row" style="flex-wrap:nowrap"><input type="text" id="uPw" value="${genPw()}" style="font-family:monospace"><button class="btn" id="uGen" type="button">Neu</button></div></label>`}
     <label class="f">Rolle<select id="uRole" ${self?"disabled":""}><option value="trainer" ${u.role!=="admin"?"selected":""}>Trainer (sieht nur zugeteilte Jahrgänge)</option><option value="admin" ${u.role==="admin"?"selected":""}>Admin (sieht alles, darf verwalten)</option></select></label>
     <label class="f" id="uGWrap">Jahrgänge<div class="dayck">${gs.length?gs.map(g=>`<label><input type="checkbox" value="${esc(g.id)}" ${(u.groups||[]).includes(g.id)?"checked":""}>${esc(g.name)}${g.years?` <span class="muted" style="font-weight:500">${esc(g.years)}</span>`:""}</label>`).join(""):'<span class="muted">Zuerst einen Jahrgang anlegen.</span>'}</div></label>
-    ${ex&&!self?`<label class="row" style="gap:8px;font-weight:600"><input type="checkbox" id="uActive" ${u.active?"checked":""}> Login aktiv</label>`:""}
+    ${ex&&!self?`<label class="row" style="gap:8px;font-weight:600"><input type="checkbox" id="uActive" ${(u.active||u.pending)?"checked":""}> Login aktiv${u.pending?' <span class="muted" style="font-weight:500">(neu registriert, wird beim Speichern freigeschaltet)</span>':""}</label>`:""}
     ${ex?`<div class="note" style="font-size:13px">Passwort vergessen? Login sperren oder entfernen und ein neues Login mit anderem Benutzernamen erstellen. Sein eigenes Passwort kann jeder unter «👤» ändern.</div>`:""}
     <div id="uMsg" class="muted" style="font-size:14px"></div>
   </div>
@@ -581,7 +676,8 @@ function userModal(uid){
     try{
       if(ex){
         const {id, ...data}=ex;
-        await S.db.doc("users/"+uid).set({...data, name, role:self?ex.role:role, groups, active: self?true:$("#uActive").checked, updatedAt:Date.now()});
+        const act = self ? true : $("#uActive").checked;
+        await S.db.doc("users/"+uid).set({...data, name, role:self?ex.role:role, groups, active:act, pending: act ? false : !!data.pending, updatedAt:Date.now()});
         toast("Gespeichert"); closeModal();
       } else {
         const pw=$("#uPw").value;
@@ -784,12 +880,15 @@ function sessionModal(id, preset={}){
   <div class="mh"><h3>${ex?"Training bearbeiten":"Neues Training"}</h3><button class="x" data-close>×</button></div>
   <div class="mb">
     <div class="aibox">
-      <div class="row" style="justify-content:space-between"><b>✨ KI-Vorschlag</b><span class="muted" style="font-size:12px">Prompt kopieren, in Claude oder ChatGPT einfügen, Vorschlag hier übertragen</span></div>
+      <div class="row" style="justify-content:space-between"><b>✨ KI-Vorschlag</b><span class="muted" style="font-size:12px">freiwillig: ohne KI einfach unten selbst ausfüllen</span></div>
       <div class="row" style="flex-wrap:nowrap;align-items:stretch">
         <input type="text" id="sWish" placeholder="Wunsch, z. B. «Hürdentechnik mit Spielform am Schluss» (optional)">
         ${S.sample?`<button class="btn ai" id="sAI">Vorschlag</button>`:""}
-        <button class="btn" id="sPrompt" title="Prompt kopieren und im eigenen Claude-Chat einfügen">Prompt kopieren</button>
+        <button class="btn" id="sPrompt" title="Prompt kopieren und im eigenen Claude-Chat einfügen">1. Prompt kopieren</button>
+        <button class="btn" id="sImp" title="Antwort der KI hier einfügen">2. KI-Antwort einfügen</button>
       </div>
+      <div id="sImpBox" hidden><textarea id="sImpTxt" style="min-height:120px" placeholder="Die ganze Antwort von Claude hier einfügen"></textarea>
+        <div class="row" style="justify-content:flex-end;margin-top:6px"><button class="btn sm" id="sImpCancel">Abbrechen</button><button class="btn sm pri" id="sImpGo">Ins Formular übernehmen</button></div></div>
       <div id="sAIMsg" class="muted" style="font-size:13px"></div>
     </div>
     <label class="f">Titel<input type="text" id="sTitle" value="${esc(s.title)}" placeholder="z. B. Sprint-Technik und Startübungen"></label>
@@ -837,9 +936,23 @@ function sessionModal(id, preset={}){
     return singlePrompt({ date:dt, dur:d.dur||g.duration||90, loc:d.loc||g.location||"", foci:d.foci, wish:[$("#sWish").value.trim(), d.title?`Arbeitstitel: ${d.title}`:""].filter(Boolean).join(". ") });
   };
   $("#sPrompt").onclick = async () => {
-    const p = editorPrompt().replace(/Antworte nur mit JSON.*$/s,"Gib den Trainingsplan stichwortartig als kurze Liste aus: Phase, Minuten, Übungen in Stichworten. Keine ganzen Sätze.");
-    if(await copyText(p)) $("#sAIMsg").textContent="Prompt kopiert. In einem Claude-Chat einfügen und den Vorschlag hier übertragen.";
+    const p = editorPrompt() + "\nGib das JSON in einem einzigen Codeblock aus, ohne weiteren Text.";
+    if(await copyText(p)) $("#sAIMsg").textContent="Prompt kopiert. Auf claude.ai in einem neuen Chat einfügen, die Antwort kopieren und hier mit «2. KI-Antwort einfügen» übernehmen.";
     else { $("#sAIMsg").innerHTML=`<textarea style="min-height:120px">${esc(p)}</textarea>`; $("#sAIMsg textarea").select(); }
+  };
+  const fillFromAI = r => {
+    $("#sTitle").value = r.title;
+    m.querySelectorAll("#sFoci .chip").forEach(c=>c.classList.toggle("sel", r.foci.includes(c.dataset.f)));
+    blocks = r.blocks; drawBlocks();
+    if(r.material) $("#sMat").value = r.material; if(r.notes) $("#sNotes").value = r.notes;
+  };
+  $("#sImp").onclick=()=>{ $("#sImpBox").hidden=false; $("#sImpTxt").focus(); };
+  $("#sImpCancel").onclick=()=>{ $("#sImpBox").hidden=true; };
+  $("#sImpGo").onclick=()=>{
+    const r=parseAIText($("#sImpTxt").value, +$("#sDur").value||90);
+    if(!r){ $("#sAIMsg").textContent="Die Antwort konnte nicht gelesen werden. Bitte die ganze Antwort von Claude einfügen."; return; }
+    fillFromAI(r); $("#sImpBox").hidden=true; $("#sImpTxt").value="";
+    $("#sAIMsg").textContent="Vorschlag übernommen. Bitte prüfen und anpassen, dann speichern.";
   };
   const aiBtn=$("#sAI"); if(aiBtn) aiBtn.onclick = async () => {
     const msg=$("#sAIMsg"); aiBtn.disabled=true; msg.innerHTML=`<span class="spin"></span> Die KI erstellt einen Vorschlag… (bis zu einer Minute)`;
@@ -1110,6 +1223,21 @@ Antworte nur mit JSON: {"sessions": [{"day": string (Wochentag wie oben), ${bloc
     else if(c==="rate_limited"){ out.innerHTML=`<div class="note warn">Zu viele Anfragen. Bitte später nochmals versuchen.</div>`; }
     else { out.innerHTML=`<div class="note warn">Der Vorschlag konnte nicht erstellt werden. Bitte nochmals versuchen.</div>`; }
   }finally{ go.disabled=false; }
+}
+function parseAIText(txt, dur){
+  if(!txt || !txt.trim()) return null;
+  let t=txt.trim(); const fence=t.match(/```(?:json)?\s*([\s\S]*?)```/i); if(fence) t=fence[1];
+  const a=t.indexOf("{"), b=t.lastIndexOf("}");
+  if(a>=0 && b>a){ try{ const r=normAI(JSON.parse(t.slice(a,b+1)),dur); if(r.blocks.length) return r; }catch(e){} }
+  // Fallback: Liste wie «Einlaufen (15 Min.): Joggen · ABC»
+  const blocks=[]; let title="";
+  for(const line of txt.split(/\n+/)){
+    const l=line.replace(/[*_#>]/g,"").trim(); if(!l) continue;
+    const m=l.match(/^[-•\d.)\s]*([^:(]{2,40}?)\s*\(?\s*(\d{1,3})\s*(?:min|minuten|′|')\.?\s*\)?\s*[:\-]\s*(.+)$/i);
+    if(m) blocks.push({phase:m[1].trim(), min:+m[2], content:m[3].trim()});
+    else if(!title && !blocks.length && l.length<70) title=l.replace(/^(titel|training)\s*:\s*/i,"");
+  }
+  return blocks.length ? {title:title||"Training", foci:[], blocks, material:"", notes:"", dur} : null;
 }
 function normAI(x,dur){
   return { day:String(x.day||""), title:String(x.title||"Training"), foci:(Array.isArray(x.foci)?x.foci:[]).map(String).filter(f=>FOCI.includes(f)),
