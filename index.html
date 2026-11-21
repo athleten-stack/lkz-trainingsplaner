@@ -211,7 +211,17 @@ input:focus,select:focus,textarea:focus{outline:2px solid #9cbcec;border-color:v
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updatePassword, reauthenticateWithCredential, EmailAuthProvider, inMemoryPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc as fsDoc, collection as fsCol, setDoc, deleteDoc, getDoc, getDocs, onSnapshot as fsSnap, query, where, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { FIREBASE_CONFIG, USER_DOMAIN } from "./firebase-config.js";
+/* Firebase-Konfiguration (nicht geheim, Schutz über firestore.rules) */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBq2XmCBtZTe4gXRd2GsH34sK30G0p1lig",
+  authDomain: "lkz-trainingsplaner.firebaseapp.com",
+  projectId: "lkz-trainingsplaner",
+  storageBucket: "lkz-trainingsplaner.firebasestorage.app",
+  messagingSenderId: "500197298722",
+  appId: "1:500197298722:web:c7a9796014d47505e8707b"
+};
+/* Interne Endung für Benutzernamen (wird nie angezeigt). Nicht mehr ändern, sobald Logins existieren. */
+const USER_DOMAIN = "lkz-planer.app";
 const BASE_URL = location.origin + location.pathname;
 /* Startgruppen, werden nur bei der ersten Einrichtung angelegt */
 const SEED_GROUPS = {"u16-k7m3px": {"color": "#0b4fa3", "days": [0, 1, 2, 3, 4], "duration": 90, "level": "", "location": "Leichtathletikanlage Herti", "name": "U16", "time": "18:00", "trainers": ["Marvin", "Safras", "Ramon", "Jani"], "years": "2011/2012"}, "u14-ga8sgb": {"color": "#862e9c", "days": [0, 1, 2, 3, 4], "duration": 90, "level": "", "location": "Leichtathletikanlage Herti", "name": "U14", "time": "18:00", "trainers": ["Florin", "Moni"], "years": ""}, "u20-und-alter-amcebz": {"color": "#2b8a3e", "days": [0, 1, 2, 3, 4, 5], "duration": 90, "level": "", "location": "Leichtathletikanlage Herti", "name": "U20 und älter", "time": "18:00", "trainers": ["Tobi", "Fabio", "Urs", "Jürg"], "years": "2011-offen"}};
@@ -307,7 +317,7 @@ function authErr(e){ const c=e&&e.code||""; console.warn(e);
 (function boot(){
   window.addEventListener("hashchange", ()=>{ if(S.profile) route(); else if(S.view==="login" && /^#invite-/.test(location.hash)) showLogin(); });
   if(!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || /^DEIN/.test(FIREBASE_CONFIG.apiKey)){
-    $("#app").innerHTML = `<div class="card empty"><h2>Einrichtung fehlt</h2><p>Bitte in der Datei <b>firebase-config.js</b> die Firebase-Konfiguration eintragen (siehe README).</p></div>`; return; }
+    renderHeader(); $("#app").innerHTML = `<div class="card empty"><h2>Einrichtung fehlt</h2><p>Bitte in der Datei <b>firebase-config.js</b> die Firebase-Konfiguration eintragen (siehe README).</p></div>`; return; }
   app = initializeApp(FIREBASE_CONFIG); auth = getAuth(app); fsdb = getFirestore(app); S.db = mkDb(fsdb);
   onAuthStateChanged(auth, u => { stopSubs(); if(u) startSession(u); else showLogin(); });
 })();
