@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LK Zug Trainingsplaner</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#0b4fa3;--blue-d:#083b7b;--blue-l:#e8f0fb;--ink:#0f1b2d;--muted:#5d6b80;
+  --bg:#f3f5f9;--card:#fff;--line:#dde3ec;--ok:#1d8a4e;--warn:#c0392b;--r:12px;
+  --sh:0 1px 2px rgba(15,27,45,.06),0 4px 14px rgba(15,27,45,.06);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Barlow",system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:"Barlow Condensed",sans-serif;letter-spacing:.2px;margin:0}
+a{color:var(--blue)}
+.top{background:var(--blue);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.top .in{max-width:1280px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:14px}
+.logo{width:44px;height:44px;border-radius:10px;background:#fff;display:grid;place-items:center;overflow:hidden;flex:none}
+.logo img{width:100%;height:100%;object-fit:contain}
+.brand{display:flex;flex-direction:column;line-height:1.05}
+.brand b{font-family:"Barlow Condensed";font-size:22px;font-weight:800;text-transform:uppercase}
+.brand span{font-size:13px;opacity:.85}
+.top .sp{flex:1}
+.pill{font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.18)}
+.top button.ghost{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff}
+main{max-width:1280px;margin:0 auto;padding:20px 18px 60px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 13px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:#b8c3d3}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.pri:hover{background:var(--blue-d)}
+.btn.ai{background:linear-gradient(135deg,#0b4fa3,#2a7de1);border:0;color:#fff}
+.btn.danger{color:var(--warn)}
+.btn.danger.armed{background:var(--warn);color:#fff;border-color:var(--warn)}
+.btn.sm{padding:5px 9px;font-size:13px}
+.btn:disabled{opacity:.55;cursor:default}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.hdr h2{font-size:30px}
+.grid-groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.gcard{padding:16px;display:flex;flex-direction:column;gap:10px;border-top:5px solid var(--gc,var(--blue))}
+.gcard h3{font-size:26px}
+.gcard .meta{font-size:14px;color:var(--muted)}
+.gcard .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.weeknav{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px}
+.weeknav button{border:0;background:none;padding:6px 10px;border-radius:7px;cursor:pointer;font-weight:700}
+.weeknav button:hover{background:var(--blue-l)}
+.weeknav .lbl{padding:0 8px;font-weight:600;min-width:200px;text-align:center}
+.week{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.day{background:#fff;border:1px solid var(--line);border-radius:var(--r);min-height:220px;display:flex;flex-direction:column}
+.day.train{border-color:#b6cbea;background:linear-gradient(#f6f9fe,#fff 60px)}
+.day.today{outline:2px solid var(--blue);outline-offset:-1px}
+.day .dh{padding:9px 10px 7px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
+.day .dh b{font-family:"Barlow Condensed";font-size:19px}
+.day .dh span{font-size:13px;color:var(--muted)}
+.day .db{padding:8px;display:flex;flex-direction:column;gap:8px;flex:1}
+.add{border:1px dashed #b8c3d3;background:none;border-radius:9px;padding:7px;color:var(--muted);cursor:pointer;font-weight:600;font-size:13px}
+.add:hover{border-color:var(--blue);color:var(--blue)}
+.sess{border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:9px;padding:8px 9px;cursor:pointer;background:#fff;text-align:left;width:100%}
+.sess:hover{box-shadow:var(--sh)}
+.sess .t{font-size:12px;color:var(--muted);font-weight:600}
+.sess .n{font-weight:700;margin:2px 0 4px;line-height:1.2}
+.sess .bl{font-size:12px;color:var(--muted);margin-top:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--blue-l);color:var(--blue-d)}
+.chip.sel{background:var(--blue);color:#fff}
+button.chip{border:1px solid transparent;cursor:pointer;font-size:13px;padding:5px 10px}
+button.chip:not(.sel){background:#fff;border-color:var(--line);color:var(--ink)}
+.who{font-size:11px;color:var(--muted)}
+@media (max-width:980px){.week{grid-template-columns:1fr}.day{min-height:0}.weeknav .lbl{min-width:0}}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(10,20,35,.45);display:none;align-items:flex-start;justify-content:center;padding:4vh 12px;z-index:50;overflow:auto}
+.ov.on{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:760px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal .mh{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.modal .mh h3{font-size:24px}
+.modal .mb{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.modal .mf{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
+.x{border:0;background:none;font-size:24px;cursor:pointer;color:var(--muted);line-height:1}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=number],select,textarea{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:#fff;width:100%;color:var(--ink);font-weight:500}
+textarea{resize:vertical;min-height:70px}
+input:focus,select:focus,textarea:focus{outline:2px solid #9cbcec;border-color:var(--blue)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:640px){.g2,.g4{grid-template-columns:1fr 1fr}}
+.block{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;grid-template-columns:170px 80px 1fr 30px;gap:8px;align-items:start;background:#fafbfd}
+@media (max-width:640px){.block{grid-template-columns:1fr 80px 30px}.block textarea{grid-column:1/-1;grid-row:2}}
+.block textarea{min-height:54px}
+.tot{font-size:13px;color:var(--muted)}
+.dayck{display:flex;gap:6px;flex-wrap:wrap}
+.dayck label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:5px 9px;cursor:pointer;font-weight:600;font-size:14px}
+.dayck input{margin:0}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.note{background:var(--blue-l);border:1px solid #c7d8f1;border-radius:10px;padding:10px 12px;font-size:14px}
+.note.warn{background:#fdf1ec;border-color:#f3cdbd}
+.aiout{display:flex;flex-direction:column;gap:10px}
+.aic{border:1px solid var(--line);border-radius:10px;padding:12px}
+.aic h4{margin:0 0 4px;font-size:17px}
+.aic ol{margin:6px 0 0;padding-left:18px;font-size:14px}
+.aic li{margin-bottom:4px}
+.spin{width:18px;height:18px;border:3px solid #c7d8f1;border-top-color:var(--blue);border-radius:50%;animation:sp 1s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.linkbox{display:flex;gap:6px}
+.linkbox input{font-size:13px}
+.sec{margin-top:30px}
+.sec h3{font-size:22px;margin-bottom:10px}
+.setgrid{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:16px}
+.biglogo{width:90px;height:90px;border-radius:14px;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;background:#fff}
+.biglogo img{width:100%;height:100%;object-fit:contain}
+.seg{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-weight:700}
+.seg button.on{background:var(--blue);color:#fff}
+.day.hol{background:#fff8e6}
+.hb{font-size:12px;font-weight:700;color:#9a6700;padding:4px 10px;background:#fff1c7;border-bottom:1px solid #f4e1a6}
+.year{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.month{padding:10px 10px 12px}
+.month .mt{font-family:"Barlow Condensed";font-weight:700;font-size:20px;margin:0 2px 6px;color:var(--blue-d)}
+.mg{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}
+.mg .wd{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding-bottom:2px}
+.dc{position:relative;border:1px solid transparent;background:#f6f8fb;border-radius:6px;height:32px;font-size:13px;font-weight:600;cursor:pointer;padding:0}
+.dc:hover{border-color:var(--blue)}
+.dc.tr{background:#e3ecf9}
+.dc.ho{background:#ffe9a8;color:#6b4a00}
+.dc.fr{background:#ffd3c2;color:#8a2c0d}
+.dc.se{background:var(--blue);color:#fff}
+.dc.se.ho,.dc.se.fr{box-shadow:inset 0 -4px 0 #f0b400}
+.dc.td{outline:2px solid var(--ink);outline-offset:-2px}
+.dc i{position:absolute;right:3px;top:3px;width:6px;height:6px;border-radius:50%;border:1px solid #fff}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.lg{display:inline-block;width:14px;height:14px;border-radius:4px}
+.lg.tr{background:#e3ecf9}.lg.ho{background:#ffe9a8}.lg.fr{background:#ffd3c2}.lg.se{background:var(--blue)}
+.modal .sess{margin-bottom:0}
+.hero{display:flex;gap:26px;align-items:center;padding:26px 28px;background:linear-gradient(135deg,#fff 55%,#eaf1fb);flex-wrap:wrap}
+.hero-logo{width:130px;height:145px;display:grid;place-items:center;flex:none}
+.hero-logo img,.hero-logo svg{width:100%;height:100%;object-fit:contain}
+.hero h1{font-size:46px;font-weight:800;text-transform:uppercase;color:var(--blue);line-height:1}
+.kicker{font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:13px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.tile{all:unset;box-sizing:border-box;cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:18px;display:flex;flex-direction:column;gap:4px;border-top:6px solid var(--gc);transition:transform .12s,box-shadow .12s}
+.tile:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,27,45,.12)}
+.tile:focus-visible{outline:3px solid #9cbcec}
+.tn{font-family:"Barlow Condensed";font-size:40px;font-weight:800;color:var(--gc);line-height:1}
+.ty{font-weight:700}
+.tm{font-size:14px;color:var(--muted)}
+.tc{font-size:12px;font-weight:700;color:var(--blue-d);margin-top:4px}
+.tgo{margin-top:10px;font-weight:700;color:var(--gc)}
+.mem{font-size:13px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.mchip{display:inline-flex;align-items:center;gap:3px;background:var(--blue-l);border-radius:99px;padding:2px 4px 2px 9px;font-weight:600;font-size:12px}
+.mchip button{border:0;background:none;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;padding:0 3px}
+.aibox{border:1px solid #c7d8f1;background:linear-gradient(135deg,#f4f8fe,#eaf1fb);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.aibox input{flex:1;min-width:0}
+.tp{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tp-head{display:flex;gap:14px;align-items:center;background:var(--blue);color:#fff;padding:14px 16px}
+.tp-logo{width:56px;height:62px;background:#fff;border-radius:8px;display:grid;place-items:center;padding:3px;flex:none}
+.tp-logo img,.tp-logo svg{width:100%;height:100%;object-fit:contain}
+.tp-club{font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.85}
+.tp-title{font-family:"Barlow Condensed";font-size:28px;font-weight:800;line-height:1.05}
+.tp-info{display:grid;grid-template-columns:1.3fr 1fr .8fr 1.6fr 1.2fr;gap:8px;padding:12px 16px;background:#f6f8fb;border-bottom:1px solid var(--line)}
+.tp-info span,.tp-foot span{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.tp-info b{font-size:14px}
+@media (max-width:640px){.tp-info{grid-template-columns:1fr 1fr}}
+.tp .note{margin:10px 16px 0!important}
+.tp-tab{width:100%;border-collapse:collapse;font-size:14px}
+.tp-tab th{background:var(--blue-l);color:var(--blue-d);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:7px 10px}
+.tp-tab td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tp-tab tbody tr:nth-child(even) td{background:#fafbfd}
+.tp-tab tfoot td{font-weight:700;border-bottom:0}
+.tp-tab .nw{white-space:nowrap}
+.pre{white-space:pre-wrap;margin:0}
+.tp-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px}
+.tp-foot>div{background:#f6f8fb;border:1px solid var(--line);border-radius:10px;padding:10px}
+.tp-foot p{font-size:14px;margin-top:4px}
+.login{max-width:420px;margin:6vh auto;padding:28px;display:flex;flex-direction:column;gap:14px}
+.utab{width:100%;border-collapse:collapse;font-size:14px}
+.utab th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line)}
+.utab td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.utab tr:last-child td{border-bottom:0}
+.utab tr.off td{opacity:.55}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <div class="logo" id="logo"></div>
+  <div class="brand"><b id="clubName">LK Zug</b><span id="subTitle">Trainingsplaner</span></div>
+  <div class="sp"></div>
+  <span class="pill" id="rolePill" hidden></span>
+  <button class="btn sm ghost" id="homeBtn" hidden>← Übersicht</button>
+  <button class="btn sm ghost" id="acctBtn" hidden></button>
+  <button class="btn sm ghost" id="adminBtn" hidden>Verwaltung</button>
+</div></header>
+<main id="app"><div class="empty"><span class="spin"></span> Laden…</div></main>
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updatePassword, reauthenticateWithCredential, EmailAuthProvider, inMemoryPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc as fsDoc, collection as fsCol, setDoc, deleteDoc, getDoc, onSnapshot as fsSnap, query, where, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { FIREBASE_CONFIG, USER_DOMAIN } from "./firebase-config.js";
+const BASE_URL = location.origin + location.pathname;
+const DAYS = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
+const D2 = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+const FOCI = ["Sprint","Hürden","Sprung","Wurf","Ausdauer","Kraft","Koordination","Beweglichkeit","Spiel","Wettkampf","Technik"];
+const FOCUS_COLORS = {Sprint:"#d9480f",Hürden:"#e67700",Sprung:"#2b8a3e",Wurf:"#862e9c",Ausdauer:"#1971c2",Kraft:"#c92a2a",Koordination:"#0b7285",Beweglichkeit:"#5c940d",Spiel:"#f08c00",Wettkampf:"#343a40",Technik:"#364fc7"};
+const PHASES = ["Einlaufen","Lauf-ABC / Koordination","Technik","Hauptteil","Kraft / Athletik","Spiel","Ausklang"];
+const SEASON = ["Grundlagen (Herbst)","Wintervorbereitung","Hallensaison","Vorbereitung Sommer","Wettkampfsaison","Übergang / Pause"];
+const DEFAULT_LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAQDAwMDAgQDAwMEBAQFBgoGBgUFBgwICQcKDgwPDg4MDQ0PERYTDxAVEQ0NExoTFRcYGRkZDxIbHRsYHRYYGRj/2wBDAQQEBAYFBgsGBgsYEA0QGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBj/wAARCADIALMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD7+ooooAKKKKACisjxTr0HhfwRrHiO5UNDptlNeOpOMiNC+M++K+Gf+Hi2sd/hZZH/ALij/wDxuvWy7I8ZmMZTw0Lpb6pfmY1K8absz79or4E/4eLar/0Suz/8Gr//ABqlH/BRfVO/wqs//Bq3/wAar0v9Tc2/59L/AMCj/mZ/W4dmffVFfA4/4KLal/F8K7T8NWb/AONVteFf2+tR8TeONG8Ow/CuJZNSvobNWTVCxUyOFyB5XOM5olwbm0U5Olov70f8xPGwW6Z9vUV82/tD/tVr8DPiBpvhiHwimuyXViL2SQ3pg8oF2VVxsbOdhOa8hH/BRabv8KU/DVz/APGqxwvCuZ4qjGvRpXjLVaxX5scsXCLa1PvCivhIf8FFj/F8Kfy1b/7VTx/wUXjxz8KW/DV//tVb/wCpecf8+f8AyaP+YfXKfn9x91UV8MJ/wUXg6P8ACmX8NWH/AMar3LwZ+0laeKv2XPEHxnuvC0mm22kPOgsGug5nMYTGH2jG5nC9D0rmxXC+Z4VRlWpWTaitYvV7LRjWLpv/AIZnutFfECf8FFtL3fvfhbeAf7Opqf8A2nTn/wCCiuj5/d/C6+I9TqaD/wBp10f6mZx/z5/8mj/mL65S8/uZ9u0V8Qf8PF9J/wCiW3vv/wATRP8A43Th/wAFFtGx83wuv/w1NP8A43R/qZnH/Pn/AMmj/mH1yl5/cz7dor5I+H/7c2l+P/idofguy+G2o29xq12lqsxv0cR7urEbBkAZJ+lfWwOVBrx8xyrFZdNU8VDlbV1qnp8mzWlWjU+EWiiivPNQooooAKKKKAPG/wBqnXU0D9kXxrctJse5shYx+rNM6x4H4Ma/IkV+lv7f2tLY/s26bpCuBJqWtRKVxyUjjkc/rs/OvzSHFfsfAdDky5z/AJpN/kv0PNxDvUYUUUor7hRuYhivYv2WdEbXf2ufBFt5ZdLe+N63sIUaTP5qK8er6r/YE0U3/wC0pqGqsuU03RZmDYyA0jxoPxwWrzs/rfV8ur1O0X+KsJatL0OV/bR1463+19r1uG3R6Zb21gmDwMRB2/8AHpGr5+rt/jFrx8T/ALQHjLXsfLd6vcMn+6JCq/oBXEV2ZXhvq+Do0bfDFL7kiL82vcKB1opcV6CiMB9+vubxIU8F/wDBITR7AfurjXTCcf3zLdGY/wDjiCvhpVLOFUEk8ADvX3F+2kIvC/7Nnwp8AW7KohRWaMcEiC2RM4+shr5rPl7XGYHDd6nN/wCAJsOjf9atfpc+HCMnrRjjFKRg4or6mwhMUYpaKOVAfQP7Fmi/2t+2DoNwQxTTra6vWIGQMQsgz+Mgr9VF+6K/Pj/gnhown+JnjHX2jU/ZNNhtVYjkGWXccfhFX6EV+F8f1/aZq4fyxS/X9T0sGvcbCiiiviTqCiiigAo7UUdqAPEv2kPhFpXxv+HE3hm2vreHxTpaHUdLBlAIJBXa6/8APN9pXd2IB7EV+Tup6bfaNrF1pWp2stre2srQz28q7XjdThlI9QRX2J+0N8atc+Gn/BQuLxHo0rzQ6Pp9rY3dmWwlzA6+bJH7Z8wEHswBqT9r34aaL4z8EaV+0h8OlW507UYY/wC1fJXqD8qXDDswP7t/Qge9frnDVSrlkKGHru9Ksk4vtJq7j8915nl1ZKUm+v8ASv8A5nxZSjpRj1pRxX6HFGTCvu3/AIJ96fZab4Q+IPjHUpYba2R7e2e5mbascaI8jknsPmUk+1fCQ619xfDvy/BX/BJjxbrZzBca5JcoG6F/MkW2AHttVv1r5zixOrgo4VP+LOEPvlf9BRdnzdr/AJf5nkn7VfwHk+FHxE/4SDQlebwjrjtNZyg7xbyn5mgZu/8AeU9wfY189V9zfs3eN9G+PfwH1X9nf4jXAkv7a1J0m7kOZGiXlCpPWSFsH3TjoDXx1458Ga38P/iFqvg/xDAYr/TpzC5wdrj+F19VYYYH0NdWQ4+q3PL8Y/31Lr/NHpL9H5+onbdbf1p/XQ56ijHNFfSoR1Pwz0FvFHxm8KeHQMi/1a2t2/3WlUH9M1+jP7WXwSj+L/gFtS8NzLL4s8NxtLDZpJkzwuNzRFc/KxC7lPcjHfj4x/ZA0Bte/a98LEoGj08zag+RkARxtg/99Mtep+L/ANoPUvhn/wAFHPE2tmWWbQDPDo+p2g53QRxqu9R/eR9zD15Hevg8/hi8Rm0HgZWnRpuaXe8knF+qTLVlHVbv7rdV958eSI8UrRyIyOh2srDBUjqCKZ2r6u/bI+Dtjomu2nxh8FpFN4Y8SlZbhrYZjiuHXcJB/syj5v8AeDeor5R2465r7DKsxp5jhoYmls+nVPqn5pmbVnZiUUHrQOTXdsM/Rj/gnxogtPgh4j154tr3+seSr/3kiiTA/BpGr6+rwr9j/QV0L9kHwoNm179Zr+TjqZJW2n/vkLXutfzdxLiPb5riJ/3mvu0/Q9XDK1NBRRRXhm4UUUUAFFFUtY1FNI8PX+qSY2WltJcEE4GEUsefwpxi5NRW7E3ZXPx5+P2ut4j/AGnvHOreb5iNrE8MbeqRt5a/ogr3/wDYp+J1hfHV/gL40KXWia7DK2nxTnKiRl/ew89A6gsP9pT3NfImp38uq63eanOxaW7nkuHJ/vOxY/zqTRdY1DQPENjrek3DW99ZTpcwTIcFHRgVP5iv6DxmVQxeB+qXtZKz7NbP5HjptWZ2Pxm+Gt/8JvjNrHgq83vDbSebZTt/y3tn5jf644PuDXA191ftL6Xp/wAc/wBkvwx8ffD1up1LToQmoxRLkpGxCyoe/wC6lGR7MTXwrWuRY+WNwilVVqkW4yXaS0f37/MbVtg6c19w/HaOPwZ/wTI+G3hVGVJdRa0lde53RvcP/wCPOPzr4q0mwk1XX7HS4QTJd3EdugHq7BR/Ovsr9vy6TS7b4b+CoCfKsbGaUgHjAEcS8f8AAG/OuXN37TMcFh+nNKX/AIDHT8WT0f8AXVf5HyN4N8V6x4H8daX4s0G4MGo6dcLPEwPXHVT6qwypHoTX2P8AtT+GdG+Mn7Pfh79ozwXbgzRWyR6pFH8ziInBD4/ihkyp9mz0FfDY619i/sQ+P7K+ufEHwM8VEXGj6/byy2kMp+XfsKzRj/fTn6p70cQ0pYfkzWgveo/Ev5oP4l8lqu1gWvu9/wA+n+XzPjzBHWiux+KfgS/+Gnxf13wVfqxbT7llikP/AC1hPzRv+KFTXHV9PRqRqwjUg7pq6fkyU7n15/wT70YXHxq8TeIpUHl6do/kiQ9FaWVf/ZY2r5o+IOuP4m+LPiXxFK29r/U7i4znOQ0jEfpivrr9jqRvCH7KPxY+IDLtaNXETEYyYbZmGD/vSiviNiWJLZJPJPrXz2Ur22bY2s1ouSC+Su/xYN6L5/nb9D7d/ZO8YaT8Wvgr4g/Zy8dyiVRavJpUj/M/kk5YLn+KJ9rr7E9hXyD438Iat4D+IWr+ENciMd9pty0EnHDgfdcezKQR7GneAfGWq/D74k6L4x0ZiLvTLlZwm4gSqD80Z9mXKn619X/tpeEtK8W+CfCn7QHhJVlsdTt4rW9eNeSrAtC7e4+aM+4UVFH/AISc39mtKWI1XlUW/wD4EvvaB6q/b8v+A/z8j4sPWlUEtgDJPGKCK6P4faE/ib4seGvDqIWOoanb22MZ4aVQf0zX1Naapwc5bJNivofsV8NdCXwx8HPC3h5f+XDSra3P1WJQf1zXUU1FCRhFACgYAHYU6v5YrVXVqSqS3bb+89uEeWKQUUUVmUFFFFABXmH7ROvjw1+y1461U/e/siW2T/emxCP1kFen18y/t2a9HpX7KU2meZtl1bU7a2VQcblUmVvqP3Y/OvUySh7fMKFN7cyv6J3f4GVd2ps/L4Uo60gpR1r+hoI8w+0v2G/F9jr+meMPgb4lfzdO1e0kurWB+mGXy7hR7lSjf8BJr5Q8deFb7wN8Sdb8IaijLcaXeSWzbhjcFb5W+jLhvxrW+D/jeX4d/G/wz4wjlaOOxv4zcbT96BjslX8UZq96/bz8G2+l/GrSPHGnoTa+ItPBkkUfK00WFzn3Qxn8K8CivqWcyh9mvG6/xw3++Lu/QT29P1/4P5njH7PugnxJ+0/4G0vyxIp1eGd1PTZEfNb9ENenft0662qftXT6aJN0el6ZbWwXGNpYGU/+jBUf7DOiNqn7WNpfmMtHpenXN0WH8JZREM/9/K84/aF14+Jf2o/HGqmTev8AastvGc5GyI+UuPwQVqv32feVOl+Mpf5Im+nz/Jf8E8zxzW14R8Taj4N8d6R4r0l9l7pl3HdxehKMDtPseQfY1jUoODmvp504zg4SWjE1c+0v22PD2neLfA3gn47eHVR7TU7VLS6dBnIdTJEWI7j94n4AV8Wj7wr7i+BjH4x/8E8/Gnwun2zanoG97EMQSAc3EOP+BrIn0OK+HiNr8g+4r53hmbo0auAm7ujJxX+F6xf3O3yBu7v3/p/jr8z7a0yceC/+CQl5MUVJvEFzIi98+bc7M/8AfERr4mJyc19lftLyr4U/YY+DvgOM7ZLmGK+lX7v3YNzZH+9P+Yr4071rwuuajWxH/PypOXyvyr8iW7v5L8r/AJsO/IzX3F+ylqVr8Xf2W/G3wF12YPNbQvNp+/kpHIdykf7kwB/4HXw7Xsn7LfjxvAP7T/hy+luPKsNQlOl3noY5vlGfo+xvwrfibBSxOAm6X8SHvx/xR1X37fMqLV9dv06nkuo2F3pesXWmX8LQ3VrK0E0bDBR1O1gfoQa9h/ZL0Ftd/a+8HptLJZzSX7+wijZgf++ttbP7ZfghfB/7UWqXdtF5dnrsKarHgcb3JWUf99qT+Ndj/wAE/tFN78f9b1plOzT9GdQ23IDSSoMZ7HCtWGaZnGrkM8bDTmp39HJW/BsKcXzKL3v+p+jy8KBS0UV/Op7gUUUUAFFFFABXw1/wUW11BpXgXw0kvzPNdX0ieyqiIf8Ax56+5T0r8y/2+dcGo/tNWekoysumaNBGwHZnd5Dn3wy19ZwXQ9pmkZfypv8AC36nNinaFu7PlgUtIKWv2yLOAUdK+5PiuZPip/wS+8H+N2Al1Dw+8K3DgchY2a1f8/3bGvhsdK+4f2V0fx5+w78VPh1M4ZoRNJbqedvmwblx/wADhJ+prw+Iv3UaGMX/AC7qRv6S91/mLuvX/P8AQofsB2g02T4j+NZkHl6fp0UQJGM/6yVhn6Rr+lfHer6hLq3iC91Wc5lu7iS4c+pdix/nX2j8BpE8F/8ABM74meLHG2bUXu4I37nMUdun/jztXxCa0yb97j8biLfajD/wGOv4snsn/V3/AMAXPNLSClr6lCPqL9hHxYNE/aQn8OTyYt9e06WAIehljxKv/jqyD8a8u+I/gA6L+1prHw+tItsb6+LW2U/885pQU/8AHXFZfwT8SHwl+0T4M1/nbb6tAJMHGUdtjD/vljX2L8U/h+t9/wAFTfAF2kKiHULeHVJWC4Ba1EhOfU4ij/MV8ji8T/Z2a1a20Z0m/wDt6n/wGKSvHTe/5/8ADHnX7fV7bwfErwb4UtnYx6VomdmeBvfaPxxGP0r5DzX0B+2jrA1b9sDxBCrArYW9tZjBzyIlY/q5r5/Ar1+GaLpZZh494p/fq/zG7Xfq/wAwNS280ttdRXEDlJYnDow6qwOQfzqL2pele41cR9w/tgRL8Qv2W/hp8XraIM5ijS5ZR90XEQYg+wkjI/H3rf8A+Cd+jLF4F8aeIGRd1xfwWaN3xHGWI+mZBWB4NV/iF/wSW1/S5CZrjw9LO0eeSoglW4AH/AHYV7V+xPoQ0f8AZH0e7MQR9Uu7q9Zv7w8wxqfyjFfkObYn6rkFfAfyVXBel+dfgdFCN6yfz/C35n0TRRRX5eeqFFFFABRRRQAV+Pv7TmtnX/2tvHN5vLJFqLWifNn5YVEfHt8pr9fbm4jtLOa5lOEiRpG+gGTX4d+ItUfW/F+q6zKxd728muWY9SXct/Wv0Tw/o3q1q3ZJffd/ojixb1ijOxijFfrj+z98OfC2mfsweCYtQ8OaTc3MmlRXU01xZxu5aUeacswzxvx+Fflp8RNVj1z4t+JtXgjhihutTuJYo4VCoqGRtoUDgDGK+2ynPYZlXrUacGlTdr331a/Q5XFpRb6q5zQr7H/4J7akB8T/ABj4emfMV7pKTmM9G8uUKf0lP518cDpX1B+wZeG3/arktu11otzH+TRv/wCy1vxNT58qrr+7f7tf0FH4l6r8z1r43aO3wo/4Jq6b4GuFNtfX2pLFLGOCxNxJO34bVX9K+Bq+9v8AgolrSpo3gbw2knMk9zfSJ3wqoin/AMeavSP2OfAHh4fsk6JqOreHtLvLrULi5uvNubVJH2+aUUZYE4wgr5/Ls7WV5Osxrx5nVnJtLTVt/pEPZNz9nDpp9y/zPzCAORxS49eK96+KvhDVvir+3N4n8JeA9HgaV9SNnDFaxiOGCOFVjaRsDCqNpJPr7mvuXwf8JfhD+zx8CZZvFFvpNylon2nU9Y1K2SR7iXHRAwJAzwqDn6kmvfzLimjgKVFuDlUqJNQW+v8AwdPN7Ewi56rZdeh+UlvO9texXMZIeJw6kdiDkV+w0XhlPFXxU8BfFGNEMVnoN0hfqSbkQFAPw83n396/Mv46fGGL4reNml0Xw/p+geHbRmWxsrS2jidh08yVlA3MfToBwO5P6W+Bdf8A7M/Yy0HxI8oX7H4Riui7diloGz+lfN8bzrToYary8s5c0bXvbnVmrr+rlYfVty6a/cz8s/jDrb+JP2gfGWtMzMLnWLkoTydokKr+gFcTuwa0bAJqni61F/cJEl3dp500rbVQO43MxPQDJJNfqhb+M/2T4rWOAax8MmCKFBaO1JOBjk7a+szXOXk0KVOnQlUuvsra1t9Ov6GUEtm0vVn5O96UkEdRX7KeHvDfwW8XaEuteGvDngvVtPd2jW6tNPt5Iyy9RkL1FeGftV+NPhj8IfATaHoPgnwo/i7Voytqo0uAm0i6NO3y9eyj157V4+A46+uYqODpYaXO3bVrTu3ppbqa1KLhDnun89/wPO/2KZH1/wDZ7+Lfgh/3iyQb44R1Jmt5Yzj/AL9rX198FvDx8K/s8+DNAaMxyW2kW/moRgiRkDvkeu5mr44/4J5XQbx/44s2Y5l0+3mI7HbKwP8A6EK/QBVCqFHQV8JxtWlTzCthl8LcZfPkSOrCU/t/L8bi0UUV8UdwUUUUAFFFFAHn/wAcdfbwv+zn401xJRHJb6RcCNicYdlKL+OWGK/GzS7GbVNZs9NgGZbqdIEHqzsFH6mv1J/bd119F/ZD1e2jOG1S8trD8C/mH9I6/PX9n7QD4m/ad8D6Rs3q2rwzSLjPyRHzWz7YQ1+p8FpYfLauIl3b+SS/W55uKfvu3Y/V3xRfJ8P/ANn7VruNtq6HoMhQ8DmKAhf1UV+LzsXcuxyx5J9a/Wr9rbU7nTf2SPFcVlazXNxfxxWKRwxl2/eSKGOB/shq/KX/AIR3xDjnQdT/APAV/wDCunw/p2wtWvLeUvyS/VsnEyjGfLfZIzhX0h+w3u/4a90/b/0DbzP02Cvna4sb2ydUvbOe2ZhlRNGUJHtmvpn9gy0+0ftUyT/8++i3L/m0a/8As1fVcQySyvEP+4/yMo6yjbuvzRc/b51w3/7Sen6UGDLpujRJgHOGkd3OR2OCv6V94/BfRB4b/Z18F6MI/La30a23oeztGGb/AMeY1+bXx7mfx1+3nrmnBmdJ9dg0lOMkBSkJ/UGv0f8Ai3rj+BP2cPFesaZK1rJpujSrayR9YnEeyMj6ErXwHElFrAZdl0d5Jfe0l+cma0JWnOo+ib+93/Qxvhl8J/DfwZ8N+IvE0u/Udd1CSfUtW1NIi8soy0nlRr12jsvVjyevH52/tD/tC+Ifjd4xIzNYeF7Nz/Z+mbuvbzZcdZD/AOO9B3J/QD9mX4zxfGP4LW95fTRnxDppFnqkfALuB8soHo45+oYdq+M/2x/gWfhv8Sf+E08P2RTw1r0rOUjX5bO6PLx8dFbll/4EO1dXCs4wzitTzNXxP2W9tN0u11a393RW6qpFezi4fD+vmfMRHAx6V+lmv6/L4d/4JRWt4ZNss/hW2skycH99ti/9BY1+anRea+8f2kNVGif8E4fht4d27ZNSt9NQgjosdt5h/XbX1fE9D2+JwFK29RP5RV2ZRdlL0t97SPg49etel/A/4P638aPina+GtOV4bCMibU74LlbWAHk/7x6KO5PoDXE+G/DeteLvFun+G/D9jJe6lqEwgt4I+rMf5AdSewGa/WX4OfCvwz+z/wDBFrN5oftMcRvtZ1Qr/rpFXLH12KAQo/qTWnFfECymhyUta09Irt5/5d38yqdPnfktyXxl4p8Dfs4fs/i4itI7XTNKtxa6dpyEB7qXHyoPVmOWZvqTX5R+OvG2v/EPx7qXi/xJdm5v76Tex/hjX+GNR2VRgAe1el/tG/F/xL8a/idJepYajb+HdPLQ6VZvCwwmeZWGPvvgE+gwO1eLS29xb4WeCSInkCRSpP51PCPD39m0XWxGteprJ7tdbfq+79ERUqqpK62Wy/r+vxPr7/gnkW/4XJ4sX+E6KpP/AH/Sv0Sr8/P+Cdtvu8f+N7sjmPT7eMH/AHpGP/stfoHX5lx475xUXZR/I9HCfAFFFFfHHUFFFFABRRRQB8Vf8FEteWL4f+DPDSN811fzXrj/AGYowo/WU/lXy3+zB418G/Dv9onTvGPje9ltNOsba42PFC0rea8ZRRtUE9GavoT9ujwh8QfGvxZ8NweFvBviDWLCw0olp7GyeaISyStuGVB52qmR9K+U/wDhSnxgHX4X+Lv/AAVTf/E1+ycPUKE8nhh6k7c8XfXX3m/0Z5Naac3r1/I/Rn/htb9nt8E+Kr78dLn/APiakX9tL9nlgf8Air7ofXS7j/4ivzhPwZ+Ly/e+GHi7/wAFM/8A8TSf8Kc+Ln/RMfF3/gpn/wDiaxXBWTv/AJeS/wDAl/kH1mf835Ho37W3xV8N/Fj43Wmr+ENQkvtHs9MitY5XiaLL7nZ8KwBH3gPwr0r/AIJ8aYP+Fn+MfEky4hsdIWEydlMkgb+URr5v/wCFO/Fofe+GXi4f9wmf/wCJr7E/Zb8KeLvh5+yZ8UNdv/C+rWut3QlSzsJrN0uJvLtyEKoRlhukOAB1Br0s7jQw2TfUsPLflgtVfVpa/IyhJXv6v9T5b8C+MNAh/a30/wAe+Mr5rfS49dk1W5mjjaU8O0i4UAk5baK+of2k/wBqj4W+PP2dNZ8J+BteurrU9RkhjaKSylhHlCQO53MAP4QMe9fHLfCn4n5/5J14rz3zpU//AMTTD8K/iaDz8O/FQ/7hU/8A8TXrYzKcBi8VSxdSfvU7cquraO+q/wCCRGSiuVS0Z1v7O3xiufgx8ZbPX5HkfRbofZNVt0Gd8JP3wP7yHDD6Ed6+0/iJ+0p+y/8AEz4a6p4N8Q+K7l7S/hKB/wCy7gtBIOUkX5OGVsEV+fx+F/xKB5+HvikfXSp//iaafhp8R14bwB4nB/7Bc/8A8TWOY5Bl+PxUMXOo41I2s4tLba909h+1tFxUtGZf9mx3Pi9NG027W/SW7FtBcRqVE4L7VYBgCM8HB9a+yv2/JrfS9D+G3hC2Zgtnbzv5fYIqxRr/AOgtXg3wT+E/jPUv2iPBtrrHg3XrSwGqwy3E9zp8qRoiNvO5ioAHy459a9a/bi0nxf4p/aLtYtI8L63qFjp2kwwLPa2UssZdmd2wyqRn5hSxtaFbO8LDn+CM5b97RX6gtI39P1f6IP2UPGn7Pvwm0ifxb4z8XJ/wl96DEkQsJ5BYQZ+6GCEF2wCSO2B65+nf+Gxf2eHQg+Ozg9jp1z/8br8xm+Hvj5Tz4H8SD/uGzf8AxNNPgPxyp+bwZ4hB99Om/wDiawzLhDL8yxEsTXrScn/ejZeS93YdOvKmrRkj9Ox+19+zo3/M8J+OnXH/AMbr4Z/av+Jnh74ofH19Y8J3632i2thBaW04jaMMRl3+VgCPmYjkdq8p/wCEG8bDr4O1/P8A2Dpv/iaD4H8a9T4P17/wXzf/ABNdWScK5dlNf6zQqNytbVprW3ZLXQU6zqW5mtD7c/4J26S0fhTxxrrRjE93bWiPjn5EdmH0/eLX21Xzr+xV4S1Dwr+y7anVLK4s7rUtQuL1obiMxuq5Ea5B5HEeefWvoqvx7izErEZviJp6Xt9yS/Q9XCK1JBRRRXzx0BRRRQAUUUhIAJJxQAYApcfWvM/hN8bvCnxkOvf8IpbanEmi3K2txJexIiyM27BTaxyPkPXHUV5nZ/tw/CS/8YReG7TS/FUt3NerYxutlGUZy+wHPmZxn2/CvSp5Njak5040m5Qtddr6oweJppKTej9T6YxRXlfh74+eBvEnxN8XeCbSW+trrwokr6ne3kSRWsYjfY5Em7oDnqBwDXAR/tufB27+Ilp4U0pde1E3V0lnFf29mogaR2CLjcwYrkjnFOnkmOqNxjRbaV3psnqvwB4mkup9JY+v50mwZzz+deceDfjX4S8dfFTxN4A0BdRk1Tw47JfSywBYAyyeWQjhjn5s9h0NcLe/ti/CWwsdcvZf7eeDRtRTTLh47NSJJWMmPL+f5l/cuc8cY9amnk2NqTdOFJtq11/i2+8TxNJK7Z9BY+v50YFeG/Db9qz4ZfFbx9D4Q8Kxa6NQlhknDXdmscaogyxZg5xWr4F/aP8Ahv8AEX4sX/w98MXl9PqlmszGSS32wSiJgrlHz8w5yOORTq5LjaLmqlFrlV3psu7+5/cNYim7JPc9dwPf86MfX86+btS/bf8AgjpWtXmmXM/iBprWd4JGj0/K7lJU4O7kZFdz4U/aG+H3jL4k6f4F0WXU21e+05NUiSW12IIXhEw3NnhtrDj1OK0rZDmFGDnUoSSSvt0W7FHFUm0k9/U9Y2j3/OgKAMCvKZv2g/h5b/EDxZ4PlvNQGoeFbGXUNTYWuYkijCltrZ+Y/Oox61r+F/jF4K8XfBe8+KOlXV3/AMI9ZxzyzSz25jkCwgl8J1OMcetc88rxcIqcqTSdrafzar7+hSxFNtpM9AxRivnzSP2zPghreovZWOq6wZEgluWL6a4VUijaRyT7KpNR6d+2p8C9V1a00yz1bWXuruZIIkOmSDc7MFA/Miup8O5mr3w8tPJk/W6X8x9D4ox9a8bT9pv4TvoHirWl1i++w+F7mO01Kb7E5AkeRo1Cf38sjcjtzU2u/tJ/Crw54c8N6vqWtXYXxJEtxptrFZySXMsbHCsYlG5QTwM9T0rH+xsfdR9hK97bPe17fdr6D+s0rX5j17FFQWdx9r0+G68qWLzUDiOZNjrkZwy9j6jtU9ea1bQ3TvqFFFFABRRRQAVyvxL1s+G/g74p8QK7I1hpN1cKyjOGWJiP1xXVVieLE8LT+Eryy8Zyaeui3SG3uV1CVY4ZFbjYxYgc+lbYZpVoOSurrRddSKnws+HP2Sfib4B8Bfs2eMLPUPE1pF4qvXvdQi04q/mukVrlfmAx/C561x/7Hs2qReN9N8j4paFpdnNfy3d94ZmgL3l4sURcuGMZAGFJ++DhSa+zB8Jf2bPDdul+/hbwXpkWoW7wxzyvHGtxC64YKzNhlKnt2NX/AAv8KfgJoniuSfwj4W8LW+s28LxyCyZWnijddjgqGJUFWx06H3r7itn+DcMRKFOd6u7ai1dK3yS+bPL+rzk1Fyjp/wAOfnylxrmqfs2/GLx5pCzGLWvFNrBeyx53C2LTzMGP90u8INfU/wAD/Hf7NVx8NPBPgnRbTTL3Xvs6XElpJp264iuoIzNJNLIV4w0bENu6YxxXvXhXwf8ACrQtD1LwV4S0fw/DYyszX+k2pSQMWAVvNjyT2A59K5jw58Jv2d/Cmq3viHw7oHhixuCr2s91Hd5WISqUaPlyse5SwwMcZqcdxBhsdCpTnCpHW8eWy+ykub7um41hnCzTWvc+LPgppHxp8SWPxM+Lnw68d2Pha2F3Ndak9zF5jXO0SXBC/Iw4Dn0+8K6D4HRpo/8AwT8+MHjrUYYp7i+nkhhlmiV8SeWsYcZHB3XDc9q+2PCngj4Vaf4E1Hwj4O0nRBoF8XF7ZWEokjl8xQrb8MTyoA69qZcfDP4UaN8K5vAd14e0iw8JTS75LCWQxQM5YNkksDncoPXtWuJ4rpVqkoeyaTnB6JKXJGzs9bt9ltYFg3y3urWf6rt6HxbpHi+D4N/8E59FTS7aBfGXjWW6jspo4gZ44HfY7hvvfcUBfdx6V5r8DNStPAn7V3w2urSx1rTBc7LDUm1SHyfNmmLxuYwf+WY3oOeflr9BF+H3wDk1bw9eLpvhiW70COO30f8A0wN9lVHLoqLvwSGJPIJya2/EngX4W/EbWrHWfEOlaVrd9oblre588lrRtwbkowxyoPPpW0eKcNThVp1KM7Vedyel/eukkuqSst1rdpakrDSlqpK68/69T5a/snSvGX/BWh9OGkWT6ZoNgfNgSBDGzC2yS64wT5k4znuBXF+EvD/xV+IP7a/xO8S/B/xBpXh680q5ksjc38QdFg8zyljRdjgcQeg4HWvt3QPBHw00/wAc6r8Q/Dul6YNb1EMl9q1vOZDICQWBO4qPuqTjHQVS8BeF/g/4c1rWz8PYtDi1DUX8zU1sL3zpJCCxy43sRy7enWuRcTwp05qnTbcaUKa5knHR+85K/Xp36l/VdVdrVv8ATbTufnt4a1PWG+Ffx98f+IdRW91a+S30WS9RNonmnusyFQAAAViPGOBjivYF8b+DtC/4JYXPhfQPEmnXWt/2dGl9aW8oaWB7q5+YOB04Yj8K+nk/Z6+DaeDL3wqngazGkXt4t/cWvnTYknUFVcnfnIDHvjmqdt+zL8DbPQr/AEe2+H9lHZagYzdQrcT4l8tiyZO/PBJPFduJ4ryzEyi5QmlGpGaSUbWioqz97ybsiY4KtHtqrdT56/Y10fVJjDaar4h8A6t4ej0mWf8Asi2igm1GBpXH/Hw3l7wuGcEFiOQKyf2Y7XRtS8X/ABs+Kt9ouny22n+bLY5gQpbsrTTDygRhSAkeCMYr638DfBb4Y/Da6vbrwT4StdJnvohBcSRyyO0iA525djgZ9Kl8P/B34b+FfAur+DtA8LwWWi6xv+32iTSEXG9djZYsWGVGOCK4cXxRhqs8S4RklV5EtErJSvK9nu9vPrYqOBmkr26/jt+J+bKltO/YOvruWUm88WeMkXaTy8dtCWYn/gcv8q9a/ZTs9H079qvU/D3xetJX8d6bbR2uiG9cNFCsSY2Rr03eXtKEcbd2Oa+t5f2fPg/N4V0bw3J4ItG0vRbmS7sLYzy7YZZGDO2d+WyVH3iemKv+Ifgv8N/FHxEsvHWseGY5PENkYzBqMM8kMi+WcoTsYA46c9uOlehjeM8HiqFbD8ko+057yVrptrlW+3KrSX5kwwVSElJW0O+XbtG3pS0ijC4pa/ND1wooooAKKKKACvkL/goNrstt8EvDnhiAFn1XV95VeSwiQ8AfWRfyr69rx74x/ATT/jF4y8G65qev3FjF4auTci0jgWRbrLxsVYkjaP3QHAPU16+RYmhhsdTrYh2jG7+dnbbzsY4hSdNqK1Plj9mrwvp37QXxSfxH8TdVhu18G2ttZab4SKlY4oo1CK7KeqAr8w6lz83GAew/Y/uB4k/aI+MvxKuAFt5LkokhXhVeaSQj2wsacV6qf2XbHTf2k7v4ueEPF134fkvi5vNKgtleGfzFxKM7hgMfnxjhuRXIeAv2KZPAXjCx1ey+LuvSWMN5HdXemQwmCK9CnOyTbJgg9DkHgmvq8Vm+AxVKvH2/Kpxiox5X7tneUdFa701/yPPjRq02rQ2/H+v61OK/ZM1mBD8dvjBeNlPOknWWRs/KPPnYH80r5xmFxD+xjaqEeS78T+NZJNqgl5Vt7ZVAH9757g/jX1fe/sJeXrWq2/hr4t61ovhjVJfMudHjgLblzkIxEgVwMkAsp/Guq8dfsdaN4l8NeDPD/hnxje+GbDwpDItoEtxPJJM8gkadn3LhywB4/CvRpZ9ldLFSrKrdVGm/dl7qjFpLbfm7EvD1WkuXb+v69Dxb9jm1sdH/AGv/ABJpv2LVfCTjSSkHhrUTI8rnMZZnYheRjcARnD8cCvqr9o7Q/hzrXwMvpfine31r4f06VL5vsUwilklUMqIuQdxYuQB6/Ssj4P8A7NmlfC3xvqPjnU/FWq+LvFV/GYX1PUuCiEgsAMkknaoJJPAwMVD+0D+z3rXx3uNMtpviHLomjWCl102OxEyyTHIMrNvXJ2nAGOOfU14GOzLCYzOoYlVnCEUrys76dtL67Xfm+xvTpVIUHFxu2fLf7OXwUsrnTvEPx917R5bHw1o1vdXmgafdMZWleNGZZWJA3LHgYOPmYe1dB+z9LN4a/wCCf/xc8e3LH7RqbXMUcpbDMRCIxz/vzH9a9r+Gv7LeteCZ7yz8QfFvXPEugXOkz6T/AGLIrQwRxypsJUGRgCq5xxxmvPbb9hPXYY5vDDfGbU18Ey3IuX0mOBgXIPBK79m7AHzY7dK9+vnuBxVSrGtiVyuUJL3ZW5Yu/KtL3vu+t/u5Vh6iSfJrt+H/AATwTw1c+JtS+Gvwy+BOi6xNpFv4yvpdU1K4RyhlSScwIpI6qFt2bb3JGa6K+0r4I/DP9pzRNO8I6n8SNJ1PRNSFnO0NvFMdRnWRVBjZnXCMdysNpBB4FfTvxT/ZL0DxjofhYeCtan8J6x4Xtks9OvI1MgMSNuUPghtwYlgwOcsaj+Hf7LV/pvxStPiN8W/Ht3481+wx9gE6lYbcqcq53EliDyBwAeeTWr4oy+VKVZVGk1O8EtXKT0b0ad1pq9CXg63Mo/j/AF/XY+kIySmSCM9j2p9IAAOKWvyc90KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD//Z";
+/* Schulferien Kanton Zug (Quelle: zg.ch/schulferien, Amt für gemeindliche Schulen) */
+const HOLIDAYS = [
+  ["2025-10-04","2025-10-19","Herbstferien"],["2025-12-20","2026-01-04","Weihnachtsferien"],["2026-01-31","2026-02-15","Sportferien"],
+  ["2026-04-11","2026-04-26","Frühlingsferien"],["2026-05-14","2026-05-17","Auffahrtsferien"],["2026-07-04","2026-08-16","Sommerferien"],
+  ["2026-10-03","2026-10-18","Herbstferien"],["2026-12-19","2027-01-03","Weihnachtsferien"],["2027-02-06","2027-02-21","Sportferien"],
+  ["2027-04-17","2027-05-02","Frühlingsferien"],["2027-05-06","2027-05-09","Auffahrtsferien"],["2027-07-03","2027-08-15","Sommerferien"],
+  ["2027-10-02","2027-10-17","Herbstferien"],["2027-12-23","2028-01-05","Weihnachtsferien"],["2028-02-05","2028-02-20","Sportferien"],
+  ["2028-04-15","2028-04-30","Frühlingsferien"],["2028-05-25","2028-05-28","Auffahrtsferien"],["2028-07-08","2028-08-20","Sommerferien"]
+];
+const FREEDAYS = {
+  "2025-12-08":"Mariä Empfängnis","2026-04-03":"Karfreitag","2026-04-06":"Ostermontag","2026-05-25":"Pfingstmontag","2026-06-04":"Fronleichnam",
+  "2026-12-08":"Mariä Empfängnis","2027-03-26":"Karfreitag","2027-03-29":"Ostermontag","2027-05-17":"Pfingstmontag","2027-05-27":"Fronleichnam",
+  "2027-11-01":"Allerheiligen","2027-12-08":"Mariä Empfängnis","2028-04-14":"Karfreitag","2028-06-05":"Pfingstmontag","2028-06-15":"Fronleichnam"
+};
+function holidayOf(d){ if(FREEDAYS[d]) return {name:FREEDAYS[d],free:true}; for(const h of HOLIDAYS) if(d>=h[0]&&d<=h[1]) return {name:h[2],free:false}; return null; }
+const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const GCOLORS = ["#0b4fa3","#d9480f","#2b8a3e","#862e9c","#0b7285","#c92a2a","#e67700"];
+
+const S = { db:null, user:null, sample:null, profile:null, usersById:{}, subs:[], owner:false, me:null, config:{}, groups:{}, groupsLoaded:false,
+  gid:null, week:monday(new Date()), year:new Date().getFullYear(), mode:(()=>{ try{ return localStorage.getItem("lkz_mode")||"week"; }catch(e){ return "week"; } })(), sessions:[], unsub:null, sessLoaded:false, view:"" };
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function monday(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const w=(x.getDay()+6)%7; x.setDate(x.getDate()-w); return x; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fromIso(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+function ch(d){ return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear(); }
+function chShort(d){ return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."; }
+function kw(d){ const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dn=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-dn); const y=new Date(Date.UTC(t.getUTCFullYear(),0,1)); return Math.ceil(((t-y)/864e5+1)/7); }
+function rid(n=6){ const a="abcdefghjkmnpqrstuvwxyz23456789"; let s=""; const r=crypto.getRandomValues(new Uint8Array(n)); for(const b of r) s+=a[b%a.length]; return s; }
+function slug(s){ return (s||"gruppe").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,20)||"gruppe"; }
+let tt; function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("on"),2600); }
+function groupLink(id){ return BASE_URL + "#g-" + id; }
+function fallbackLogo(){ return `<svg viewBox="0 0 44 44" width="44" height="44"><rect width="44" height="44" rx="10" fill="#fff"/><circle cx="22" cy="22" r="17" fill="none" stroke="#0b4fa3" stroke-width="3"/><text x="22" y="27" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="800" font-size="14" fill="#0b4fa3">LKZ</text></svg>`; }
+function logoHtml(){ const src = S.config.logo || DEFAULT_LOGO; return src ? `<img alt="Logo" src="${esc(src)}">` : fallbackLogo(); }
+async function copyText(txt){ try{ await navigator.clipboard.writeText(txt); toast("Kopiert"); return true; }catch(e){ return false; } }
+function dbErr(e){ console.warn(e); const c=e&&e.code; if(c==="permission-denied"||c==="invalid_argument") return "Keine Schreibberechtigung (oder ungültige Daten)."; if(c==="quota_exceeded") return "Speicher voll. Bitte alte Trainings löschen."; return "Speichern fehlgeschlagen. Bitte nochmals versuchen."; }
+
+/* ---------- modal ---------- */
+function openModal(html){ $("#modal").innerHTML=html; $("#ov").classList.add("on"); }
+function closeModal(){ $("#ov").classList.remove("on"); $("#modal").innerHTML=""; aiCtl?.abort(); }
+$("#ov").addEventListener("mousedown",e=>{ if(e.target.id==="ov") closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && $("#ov").classList.contains("on")) closeModal(); });
+
+/* ---------- header ---------- */
+function renderHeader(){
+  $("#logo").innerHTML = logoHtml();
+  $("#clubName").textContent = S.config.clubName || "LK Zug";
+  const g = S.gid && S.groups[S.gid];
+  $("#subTitle").textContent = g ? `Trainingsplan ${g.name}${g.years ? " · Jg. "+g.years : ""}` : "Trainingsplaner";
+  $("#rolePill").hidden = !S.owner; $("#rolePill").textContent = "Admin";
+  $("#adminBtn").hidden = !(S.owner && S.view==="home");
+  $("#homeBtn").hidden = !(S.view==="group" || S.view==="admin" || S.view==="none");
+  $("#acctBtn").hidden = !S.profile; if(S.profile) $("#acctBtn").textContent = "👤 " + (S.profile.name || S.profile.username || "Konto");
+}
+$("#acctBtn").onclick = () => accountModal();
+$("#adminBtn").onclick = () => { location.hash = "admin"; };
+$("#homeBtn").onclick = () => { location.hash = ""; if(location.hash==="") route(); };
+
+/* ---------- Firebase ---------- */
+const wrapDoc = s => ({ id:s.id, exists:s.exists(), data:()=>s.data(), metadata:s.metadata });
+function mkDb(fs){
+  const D = p => { const r=fsDoc(fs,p); return { id:r.id, path:p, get:async()=>wrapDoc(await getDoc(r)), set:d=>setDoc(r,d), delete:()=>deleteDoc(r),
+    onSnapshot:(n,e)=>fsSnap(r,s=>n(wrapDoc(s)),e) }; };
+  const Q = (p,cons=[]) => ({ where:(f,o,v)=>Q(p,[...cons,where(f,o,v)]),
+    onSnapshot:(n,e)=>fsSnap(query(fsCol(fs,p),...cons),s=>n({docs:s.docs.map(wrapDoc),size:s.size,empty:s.empty,metadata:s.metadata}),e),
+    add:async d=>{ const r=await addDoc(fsCol(fs,p),d); return D(r.path); }, doc:id=>D(p+"/"+id) });
+  return { doc:D, collection:p=>Q(p) };
+}
+let app, auth, fsdb, secApp;
+const emailOf = u => `${String(u).trim().toLowerCase()}@${USER_DOMAIN||"lkz-planer.app"}`;
+function secondaryAuth(){ if(!secApp){ secApp=initializeApp(FIREBASE_CONFIG,"secondary"); } const a=getAuth(secApp); setPersistence(a,inMemoryPersistence).catch(()=>{}); return a; }
+function authErr(e){ const c=e&&e.code||""; console.warn(e);
+  if(/invalid-credential|wrong-password|user-not-found|invalid-email/.test(c)) return "Benutzername oder Passwort falsch.";
+  if(/too-many-requests/.test(c)) return "Zu viele Versuche. Bitte kurz warten.";
+  if(/email-already-in-use/.test(c)) return "Dieser Benutzername ist bereits vergeben.";
+  if(/weak-password/.test(c)) return "Das Passwort muss mindestens 6 Zeichen haben.";
+  if(/network/.test(c)) return "Keine Verbindung zum Server.";
+  return "Fehler: " + (c||"unbekannt"); }
+
+(function boot(){
+  window.addEventListener("hashchange", ()=>{ if(S.profile) route(); });
+  if(!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || /^DEIN/.test(FIREBASE_CONFIG.apiKey)){
+    $("#app").innerHTML = `<div class="card empty"><h2>Einrichtung fehlt</h2><p>Bitte in der Datei <b>firebase-config.js</b> die Firebase-Konfiguration eintragen (siehe README).</p></div>`; return; }
+  app = initializeApp(FIREBASE_CONFIG); auth = getAuth(app); fsdb = getFirestore(app); S.db = mkDb(fsdb);
+  onAuthStateChanged(auth, u => { stopSubs(); if(u) startSession(u); else showLogin(); });
+})();
+function stopSubs(){ S.subs.forEach(f=>{ try{ f(); }catch(e){} }); S.subs=[]; Object.values(S.gSubs||{}).forEach(f=>f()); S.gSubs={};
+  setGroup(null); S.profile=null; S.owner=false; S.me=null; S.groups={}; S.groupsLoaded=false; S.usersById={}; S.config={}; S.dataStarted=false; renderHeader(); }
+
+async function showLogin(){
+  S.view="login"; renderHeader();
+  $("#app").innerHTML = `<div class="empty"><span class="spin"></span></div>`;
+  let setupDone=true; try{ setupDone=(await S.db.doc("config/setup").get()).exists; }catch(e){ console.warn(e); }
+  const first=!setupDone;
+  $("#app").innerHTML = `
+  <div class="login card">
+    <div class="hero-logo" style="margin:0 auto">${logoHtml()}</div>
+    <h1 style="text-align:center;color:var(--blue);font-size:34px;text-transform:uppercase">Trainingsplaner</h1>
+    ${first?`<div class="note">Erste Einrichtung: Erstelle jetzt das <b>Admin-Konto</b>. Danach kannst du in der Verwaltung Logins für die Trainer erstellen.</div>
+      <label class="f">Dein Name<input type="text" id="lName" autocomplete="name"></label>`:""}
+    <label class="f">Benutzername<input type="text" id="lUser" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+    <label class="f">Passwort<input type="password" id="lPw" autocomplete="${first?"new-password":"current-password"}"></label>
+    <div id="lMsg" class="muted" style="font-size:14px;min-height:18px"></div>
+    <button class="btn pri" id="lGo" style="justify-content:center;padding:11px">${first?"Admin-Konto erstellen":"Anmelden"}</button>
+  </div>`;
+  const go = async () => {
+    const un=$("#lUser").value.trim(), pw=$("#lPw").value, msg=$("#lMsg"), nm=first?($("#lName").value.trim()||un):"";
+    if(!un||!pw){ msg.textContent="Bitte Benutzername und Passwort eingeben."; return; }
+    if(first && !/^[a-z0-9._-]{3,30}$/i.test(un)){ msg.textContent="Benutzername: 3 bis 30 Zeichen, nur Buchstaben, Zahlen, Punkt, Bindestrich."; return; }
+    $("#lGo").disabled=true; msg.textContent="";
+    try{
+      if(first){
+        S.settingUp=true;
+        const cred=await createUserWithEmailAndPassword(auth, emailOf(un), pw);
+        const b=writeBatch(fsdb);
+        b.set(fsDoc(fsdb,"users/"+cred.user.uid),{name:nm, username:un.toLowerCase(), role:"admin", groups:[], active:true, createdAt:Date.now()});
+        b.set(fsDoc(fsdb,"config/setup"),{by:cred.user.uid, at:Date.now()});
+        await b.commit();
+        await setDoc(fsDoc(fsdb,"config/main"),{clubName:"LK Zug", updatedAt:Date.now()});
+        S.settingUp=false;
+      } else await signInWithEmailAndPassword(auth, emailOf(un), pw);
+    }catch(e){ S.settingUp=false; console.warn(e); if(msg.isConnected){ msg.textContent=authErr(e); $("#lGo").disabled=false; } else { toast(authErr(e)); } }
+  };
+  $("#lGo").onclick=go; $("#lPw").onkeydown=e=>{ if(e.key==="Enter") go(); };
+}
+
+function startSession(u){
+  S.me=u.uid; S.view="loading"; $("#app").innerHTML=`<div class="empty"><span class="spin"></span> Laden…</div>`;
+  S.subs.push(S.db.doc("users/"+u.uid).onSnapshot(s=>{
+    const p = s.exists ? s.data() : null;
+    if(!p && S.settingUp) return;
+    if(!p || p.active!==true){ S.profile=null; S.view="none"; renderHeader();
+      $("#app").innerHTML=`<div class="card empty"><h2>Kein Zugang</h2><p>Dein Login ist nicht (mehr) aktiv. Bitte beim Admin melden.</p><button class="btn" id="xOut">Abmelden</button></div>`;
+      $("#xOut").onclick=()=>signOut(auth); return; }
+    S.profile=p; S.owner = p.role==="admin"; S.myGroups = p.groups||[]; S.myLoaded=true;
+    startData(); syncGroupSubs(); renderHeader();
+    if(S.view==="loading" || S.view==="home" || S.view==="group" || S.view==="none") route();
+  }, e=>{ console.warn(e); $("#app").innerHTML=`<div class="card empty"><h2>Kein Zugang</h2><p>Die Daten können nicht geladen werden.</p><button class="btn" id="xOut">Abmelden</button></div>`; $("#xOut").onclick=()=>signOut(auth); }));
+}
+function startData(){
+  if(S.dataStarted) return; S.dataStarted=true;
+  S.subs.push(S.db.doc("config/main").onSnapshot(s=>{ S.config = s.exists ? s.data() : {}; renderHeader(); if(S.view==="admin") renderAdmin(); if(S.view==="home") renderHome(); }, e=>console.warn(e)));
+  S.subs.push(S.db.collection("users").onSnapshot(s=>{ S.usersById={}; s.docs.forEach(d=>S.usersById[d.id]={id:d.id,...d.data()}); if(S.view==="admin") renderAdmin(); if(S.view==="home") renderHome(); }, e=>console.warn(e)));
+}
+function syncGroupSubs(){
+  S.gSubs = S.gSubs || {};
+  if(S.owner){
+    if(!S.gSubs.__all){ Object.values(S.gSubs).forEach(f=>f()); S.gSubs={};
+      S.gSubs.__all = S.db.collection("groups").onSnapshot(s=>{ S.groups={}; s.docs.forEach(d=>S.groups[d.id]={id:d.id,...d.data()}); S.groupsLoaded=true; if(S.view!=="admin"||true) route(); }, e=>console.warn(e)); }
+    return;
+  }
+  if(S.gSubs.__all){ S.gSubs.__all(); delete S.gSubs.__all; S.groups={}; }
+  const want=new Set(S.myGroups||[]);
+  for(const k of Object.keys(S.gSubs)) if(!want.has(k)){ S.gSubs[k](); delete S.gSubs[k]; delete S.groups[k]; }
+  let pending=[...want].filter(k=>!S.gSubs[k]).length;
+  if(!want.size){ S.groupsLoaded=true; }
+  for(const k of want) if(!S.gSubs[k]){
+    S.gSubs[k] = S.db.doc("groups/"+k).onSnapshot(s=>{ if(s.exists) S.groups[k]={id:k,...s.data()}; else delete S.groups[k];
+      if(--pending<=0) S.groupsLoaded=true; route(); }, e=>{ console.warn(e); delete S.groups[k]; if(--pending<=0) S.groupsLoaded=true; route(); });
+  }
+}
+
+function route(){
+  if(!S.profile) return;
+  const h = location.hash.replace(/^#/,"");
+  if(h.startsWith("g-")){
+    const id = h.slice(2);
+    if(!S.groups[id]){ if(S.groupsLoaded){ S.view="none"; setGroup(null); $("#app").innerHTML=`<div class="card empty"><h2>Kein Zugriff</h2><p>Diese Gruppe gibt es nicht oder sie ist dir nicht zugeteilt. Bitte beim Admin melden.</p></div>`; renderHeader(); } return; }
+    if(S.view==="group" && S.gid===id){ renderHeader(); renderGroup(); return; }
+    S.view="group"; setGroup(id); renderHeader(); renderGroup(); return;
+  }
+  if(h==="admin" && S.owner){ S.view="admin"; setGroup(null); renderHeader(); renderAdmin(); return; }
+  S.view="home"; setGroup(null); renderHeader(); renderHome();
+}
+function visibleGroups(){
+  const all=Object.values(S.groups);
+  const list = S.owner ? all : all.filter(g => (S.myGroups||[]).includes(g.id));
+  return list.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de",{numeric:true}));
+}
+function groupUsers(gid){ return Object.values(S.usersById).filter(u=>u.active && u.role!=="admin" && (u.groups||[]).includes(gid)); }
+
+/* ---------- Konto ---------- */
+function accountModal(){
+  const p=S.profile||{};
+  openModal(`<div class="mh"><h3>Mein Konto</h3><button class="x" data-close>×</button></div>
+  <div class="mb"><div><b>${esc(p.name||"")}</b><div class="muted">Benutzername: ${esc(p.username||"")} · ${p.role==="admin"?"Admin":"Trainer"}</div></div>
+    <h3 style="font-size:20px">Passwort ändern</h3>
+    <label class="f">Aktuelles Passwort<input type="password" id="pOld" autocomplete="current-password"></label>
+    <div class="g2"><label class="f">Neues Passwort<input type="password" id="pNew" autocomplete="new-password"></label>
+    <label class="f">Neues Passwort wiederholen<input type="password" id="pNew2" autocomplete="new-password"></label></div>
+    <div id="pMsg" class="muted" style="font-size:14px"></div></div>
+  <div class="mf"><button class="btn danger" id="pOut" style="margin-right:auto">Abmelden</button><button class="btn" data-close>Schliessen</button><button class="btn pri" id="pSave">Passwort speichern</button></div>`);
+  $("#modal").querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  $("#pOut").onclick=()=>{ closeModal(); location.hash=""; signOut(auth); };
+  $("#pSave").onclick=async()=>{
+    const o=$("#pOld").value, n=$("#pNew").value, msg=$("#pMsg");
+    if(n.length<6){ msg.textContent="Mindestens 6 Zeichen."; return; } if(n!==$("#pNew2").value){ msg.textContent="Die neuen Passwörter stimmen nicht überein."; return; }
+    try{ await reauthenticateWithCredential(auth.currentUser, EmailAuthProvider.credential(auth.currentUser.email,o)); await updatePassword(auth.currentUser,n); toast("Passwort geändert"); closeModal(); }
+    catch(e){ msg.textContent=authErr(e); }
+  };
+}
+
+/* ================= TITELSEITE ================= */
+function renderHome(){
+  if(S.view!=="home") return;
+  const gs=visibleGroups();
+  const waiting = !S.owner && S.me && !S.myLoaded;
+  $("#app").innerHTML = `
+  <section class="hero card">
+    <div class="hero-logo">${logoHtml()}</div>
+    <div>
+      <div class="kicker">${esc(S.config.clubName||"LK Zug")}</div>
+      <h1>Trainingsplaner</h1>
+      <p class="muted">${S.owner?"Du bist Admin und siehst alle Trainingsgruppen.":"Wähle deine Trainingsgruppe."} Saison ${seasonLabel()}.</p>
+      ${S.owner?`<div class="row" style="margin-top:10px"><button class="btn pri" id="hAdmin">Verwaltung</button><button class="btn" id="hNew">+ Neue Gruppe</button></div>`:""}
+    </div>
+  </section>
+  <div class="hdr" style="margin-top:24px"><h2>${S.owner?"Alle Jahrgänge":"Deine Jahrgänge"}</h2>${nextHolidayHtml()}</div>
+  ${waiting?`<div class="empty"><span class="spin"></span></div>`:
+    gs.length?`<div class="tiles">${gs.map(g=>`
+    <button class="tile" data-go="${esc(g.id)}" style="--gc:${esc(g.color||"#0b4fa3")}">
+      <span class="tn">${esc(g.name)}</span>
+      <span class="ty">${g.years?"Jahrgang "+esc(g.years):"&nbsp;"}</span>
+      <span class="tm">${esc((g.days||[]).map(i=>D2[i]).join(", ")||"–")}${g.time?" · "+esc(g.time):""}</span>
+      <span class="tm">${esc((g.trainers||[]).join(", ")||"")}</span>
+      ${S.owner?`<span class="tc">${groupUsers(g.id).length} Trainer mit Login</span>`:""}
+      <span class="tgo">Öffnen →</span>
+    </button>`).join("")}</div>`
+    : `<div class="card empty"><h3>${S.owner?"Noch keine Gruppen":"Noch kein Jahrgang zugeteilt"}</h3><p>${S.owner?"Lege in der Verwaltung die erste Gruppe an.":"Dir ist noch kein Jahrgang zugeteilt. Bitte beim Admin melden."}</p></div>`}`;
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ location.hash="g-"+b.dataset.go; });
+  if(S.owner){ $("#hAdmin").onclick=()=>{ location.hash="admin"; }; $("#hNew").onclick=()=>groupModal(null); }
+}
+function seasonLabel(){ const d=new Date(), y=d.getFullYear(); return d.getMonth()>=7 ? `${y}/${String(y+1).slice(2)}` : `${y-1}/${String(y).slice(2)}`; }
+function nextHolidayHtml(){
+  const t=iso(new Date()); const cur=HOLIDAYS.find(h=>t>=h[0]&&t<=h[1]); if(cur) return `<span class="chip" style="background:#ffe9a8;color:#6b4a00">🏖️ ${esc(cur[2])} bis ${ch(fromIso(cur[1]))}</span>`;
+  const n=HOLIDAYS.find(h=>h[0]>t); return n?`<span class="muted" style="font-size:14px">Nächste Schulferien: ${esc(n[2])} ab ${ch(fromIso(n[0]))}</span>`:"";
+}
+
+function setGroup(id){
+  if(S.gid===id) return;
+  S.unsub?.(); S.unsub=null; S.sessions=[]; S.sessLoaded=false; S.gid=id;
+  if(!id) return;
+  S.unsub = S.db.collection("sessions").where("gid","==",id).onSnapshot(s=>{
+    S.sessions = s.docs.map(d=>({id:d.id, ...d.data()}));
+    if(!s.metadata.fromCache) S.sessLoaded = true;
+    if(S.view==="group") renderCal();
+  }, e=>{ console.warn(e); toast("Trainings konnten nicht geladen werden"); });
+}
+
+/* ================= ADMIN ================= */
+function renderAdmin(){
+  if(!S.owner) return;
+  const gs = Object.values(S.groups).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de",{numeric:true}));
+  $("#app").innerHTML = `
+  <div class="hdr"><div><h2>Verwaltung · Trainingsgruppen</h2><div class="muted">Jahrgänge verwalten, Logins erstellen und Trainer zuteilen.</div></div>
+    <button class="btn pri" id="newG">+ Neue Gruppe</button></div>
+  ${gs.length ? `<div class="grid-groups">${gs.map(g=>`
+    <div class="card gcard" style="--gc:${esc(g.color||"#0b4fa3")}">
+      <div class="row" style="justify-content:space-between"><h3>${esc(g.name)}</h3><span class="chip">${g.years?"Jg. "+esc(g.years):"–"}</span></div>
+      <div class="meta">Trainer: ${esc((g.trainers||[]).join(", ")||"–")}<br>Trainingstage: ${esc((g.days||[]).map(i=>D2[i]).join(", ")||"–")}${g.time?" · "+esc(g.time):""}${g.location?" · "+esc(g.location):""}</div>
+      <div class="mem"><b>Trainer mit Login:</b> ${memberList(g.id)}</div>
+      <div class="linkbox"><input type="text" readonly value="${esc(groupLink(g.id))}"><button class="btn sm" data-copy="${esc(g.id)}">Kopieren</button></div>
+      <div class="acts">
+        <button class="btn sm pri" data-open="${esc(g.id)}">Plan öffnen</button>
+        <button class="btn sm" data-edit="${esc(g.id)}">Bearbeiten</button>
+      </div>
+    </div>`).join("")}</div>`
+  : `<div class="card empty"><h3>Noch keine Gruppen</h3><p>Lege die erste Trainingsgruppe an, z. B. «U16».</p></div>`}
+
+  <div class="sec"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Logins</h3><button class="btn pri" id="newU">+ Login erstellen</button></div>
+    ${usersTable()}
+  </div>
+
+  <div class="sec"><h3>Vereinseinstellungen</h3>
+    <div class="card setgrid">
+      <div class="biglogo">${logoHtml()}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label class="f">Vereinsname<input type="text" id="cfgName" value="${esc(S.config.clubName||"LK Zug")}"></label>
+        <div class="row">
+          <label class="btn sm" style="cursor:pointer">Anderes Logo hochladen<input type="file" id="logoIn" accept="image/*" hidden></label>
+          ${S.config.logo?`<button class="btn sm danger" id="logoDel">Standard-Logo verwenden</button>`:""}
+          <button class="btn sm pri" id="cfgSave">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec"><h3>So gibst du Trainern Zugang</h3>
+    <div class="note">1. Jahrgang anlegen (falls noch nicht vorhanden).<br>
+    2. «+ Login erstellen»: Name, Benutzername und Passwort festlegen und die Jahrgänge ankreuzen.<br>
+    3. Die angezeigten Zugangsdaten kopieren und dem Trainer schicken.<br>
+    4. Der Trainer meldet sich an und sieht nur seine Jahrgänge. Sein Passwort kann er unter «👤» selbst ändern.<br>
+    Zuteilung ändern oder Login sperren: in der Liste «Logins» auf «Bearbeiten».</div>
+  </div>`;
+
+  $("#newG").onclick = () => groupModal(null);
+  $("#newU").onclick = () => userModal(null);
+  document.querySelectorAll("[data-uedit]").forEach(b=>b.onclick=()=>userModal(b.dataset.uedit));
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>groupModal(b.dataset.edit));
+  document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{ location.hash="g-"+b.dataset.open; });
+  document.querySelectorAll("[data-unjoin]").forEach(b=>b.onclick=async()=>{
+    const [uid,gid]=b.dataset.unjoin.split("|"); const u=S.usersById[uid]; if(!u) return;
+    const {id, ...data}=u;
+    try{ await S.db.doc("users/"+uid).set({...data, groups:(u.groups||[]).filter(x=>x!==gid), updatedAt:Date.now()}); toast("Zuteilung entfernt"); }catch(e){ toast(dbErr(e)); }
+  });
+  fillNames();
+  document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{
+    const inp=b.previousElementSibling; if(!(await copyText(inp.value))){ inp.select(); toast("Link markiert, bitte mit Ctrl+C kopieren"); }
+  });
+  $("#logoIn").onchange = e => uploadLogo(e.target.files[0]);
+  const ld=$("#logoDel"); if(ld) ld.onclick = () => saveConfig({logo:null});
+  $("#cfgSave").onclick = () => saveConfig({clubName:$("#cfgName").value.trim()||"LK Zug"});
+}
+
+function memberList(gid){
+  const ms=groupUsers(gid);
+  if(!ms.length) return `<span class="muted">noch niemand zugeteilt</span>`;
+  return ms.map(m=>`<span class="mchip">${esc(m.name||m.username)}<button title="Zuteilung entfernen" data-unjoin="${esc(m.id)}|${esc(gid)}">×</button></span>`).join(" ");
+}
+function usersTable(){
+  const us=Object.values(S.usersById).sort((a,b)=>(a.role===b.role?0:a.role==="admin"?-1:1)||(a.name||"").localeCompare(b.name||"","de"));
+  if(!us.length) return `<div class="card empty">Noch keine Logins.</div>`;
+  return `<div class="card" style="overflow-x:auto"><table class="utab"><thead><tr><th>Name</th><th>Benutzername</th><th>Rolle</th><th>Jahrgänge</th><th>Status</th><th></th></tr></thead><tbody>
+  ${us.map(u=>`<tr class="${u.active?"":"off"}"><td><b>${esc(u.name||"")}</b>${u.id===S.me?' <span class="muted">(du)</span>':""}</td><td>${esc(u.username||"")}</td>
+    <td>${u.role==="admin"?'<span class="chip">Admin</span>':"Trainer"}</td>
+    <td>${u.role==="admin"?'<span class="muted">alle</span>':`<div class="chips">${(u.groups||[]).map(g=>S.groups[g]?`<span class="chip">${esc(S.groups[g].name)}</span>`:"").join("")||'<span class="muted">keine</span>'}</div>`}</td>
+    <td>${u.active?"aktiv":'<span style="color:var(--warn);font-weight:700">gesperrt</span>'}</td>
+    <td><button class="btn sm" data-uedit="${esc(u.id)}">Bearbeiten</button></td></tr>`).join("")}
+  </tbody></table></div>`;
+}
+function genPw(){ const a="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"; const r=crypto.getRandomValues(new Uint8Array(10)); return [...r].map(b=>a[b%a.length]).join(""); }
+function userModal(uid){
+  const ex = uid ? S.usersById[uid] : null, self = uid===S.me;
+  const u = ex || {name:"", username:"", role:"trainer", groups:[], active:true};
+  const gs = Object.values(S.groups).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de",{numeric:true}));
+  openModal(`<div class="mh"><h3>${ex?"Login bearbeiten":"Neues Login"}</h3><button class="x" data-close>×</button></div>
+  <div class="mb">
+    <div class="g2"><label class="f">Name<input type="text" id="uName" value="${esc(u.name)}" placeholder="Vorname Nachname"></label>
+      <label class="f">Benutzername<input type="text" id="uUser" value="${esc(u.username)}" ${ex?"disabled":""} autocapitalize="none" spellcheck="false" placeholder="z. B. anna.muster"></label></div>
+    ${ex?"":`<label class="f">Passwort<div class="row" style="flex-wrap:nowrap"><input type="text" id="uPw" value="${genPw()}" style="font-family:monospace"><button class="btn" id="uGen" type="button">Neu</button></div></label>`}
+    <label class="f">Rolle<select id="uRole" ${self?"disabled":""}><option value="trainer" ${u.role!=="admin"?"selected":""}>Trainer (sieht nur zugeteilte Jahrgänge)</option><option value="admin" ${u.role==="admin"?"selected":""}>Admin (sieht alles, darf verwalten)</option></select></label>
+    <label class="f" id="uGWrap">Jahrgänge<div class="dayck">${gs.length?gs.map(g=>`<label><input type="checkbox" value="${esc(g.id)}" ${(u.groups||[]).includes(g.id)?"checked":""}>${esc(g.name)}${g.years?` <span class="muted" style="font-weight:500">${esc(g.years)}</span>`:""}</label>`).join(""):'<span class="muted">Zuerst einen Jahrgang anlegen.</span>'}</div></label>
+    ${ex&&!self?`<label class="row" style="gap:8px;font-weight:600"><input type="checkbox" id="uActive" ${u.active?"checked":""}> Login aktiv</label>`:""}
+    ${ex?`<div class="note" style="font-size:13px">Passwort vergessen? Login sperren oder entfernen und ein neues Login mit anderem Benutzernamen erstellen. Sein eigenes Passwort kann jeder unter «👤» ändern.</div>`:""}
+    <div id="uMsg" class="muted" style="font-size:14px"></div>
+  </div>
+  <div class="mf">${ex&&!self?`<button class="btn danger" id="uDel" style="margin-right:auto">Login entfernen</button>`:""}
+    <button class="btn" data-close>Abbrechen</button><button class="btn pri" id="uSave">${ex?"Speichern":"Login erstellen"}</button></div>`);
+  const m=$("#modal"); m.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  const gen=$("#uGen"); if(gen) gen.onclick=()=>{ $("#uPw").value=genPw(); };
+  const roleUpd=()=>{ $("#uGWrap").style.display = $("#uRole").value==="admin" ? "none" : ""; }; $("#uRole").onchange=roleUpd; roleUpd();
+  $("#uSave").onclick = async () => {
+    const msg=$("#uMsg"), name=$("#uName").value.trim(), un=$("#uUser").value.trim().toLowerCase(), role=$("#uRole").value;
+    const groups=[...m.querySelectorAll("#uGWrap input:checked")].map(i=>i.value);
+    if(!name){ msg.textContent="Bitte einen Namen eingeben."; return; }
+    $("#uSave").disabled=true;
+    try{
+      if(ex){
+        const {id, ...data}=ex;
+        await S.db.doc("users/"+uid).set({...data, name, role:self?ex.role:role, groups, active: self?true:$("#uActive").checked, updatedAt:Date.now()});
+        toast("Gespeichert"); closeModal();
+      } else {
+        const pw=$("#uPw").value;
+        if(!/^[a-z0-9._-]{3,30}$/.test(un)){ msg.textContent="Benutzername: 3 bis 30 Zeichen, nur Kleinbuchstaben, Zahlen, Punkt, Bindestrich."; $("#uSave").disabled=false; return; }
+        if(pw.length<6){ msg.textContent="Das Passwort muss mindestens 6 Zeichen haben."; $("#uSave").disabled=false; return; }
+        const sec=secondaryAuth(); const cred=await createUserWithEmailAndPassword(sec, emailOf(un), pw); const nid=cred.user.uid; await signOut(sec);
+        await S.db.doc("users/"+nid).set({name, username:un, role, groups, active:true, createdAt:Date.now()});
+        showCredentials(name, un, pw, role==="admin"?[]:groups);
+      }
+    }catch(e){ msg.textContent = e&&String(e.code||"").startsWith("auth/") ? authErr(e) : dbErr(e); $("#uSave").disabled=false; }
+  };
+  const del=$("#uDel"); if(del) del.onclick = async () => {
+    if(!del.classList.contains("armed")){ del.classList.add("armed"); del.textContent="Wirklich entfernen?"; return; }
+    try{ await S.db.doc("users/"+uid).delete(); toast("Login entfernt"); closeModal(); }catch(e){ $("#uMsg").textContent=dbErr(e); }
+  };
+}
+function showCredentials(name, un, pw, groups){
+  const gnames=groups.map(g=>S.groups[g]?.name).filter(Boolean).join(", ");
+  const txt=`Hallo ${name.split(" ")[0]}\n\nHier sind deine Zugangsdaten für den ${S.config.clubName||"LK Zug"} Trainingsplaner${gnames?` (${gnames})`:""}:\n\nLink: ${BASE_URL}\nBenutzername: ${un}\nPasswort: ${pw}\n\nDas Passwort kannst du nach dem Anmelden oben rechts unter «👤» ändern.`;
+  openModal(`<div class="mh"><h3>Login erstellt</h3><button class="x" data-close>×</button></div>
+  <div class="mb"><div class="note">Kopiere die Zugangsdaten jetzt. Das Passwort wird danach nicht mehr angezeigt.</div>
+    <textarea id="cTxt" style="min-height:220px;font-size:14px">${esc(txt)}</textarea></div>
+  <div class="mf"><button class="btn" data-close>Schliessen</button><button class="btn pri" id="cCopy">Kopieren</button></div>`);
+  $("#modal").querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  $("#cCopy").onclick=async()=>{ if(!(await copyText($("#cTxt").value))){ $("#cTxt").select(); toast("Markiert, bitte mit Ctrl+C kopieren"); } };
+}
+async function saveConfig(patch){
+  const next = {...S.config, ...patch, updatedAt:Date.now()};
+  if(next.logo===null) delete next.logo;
+  try{ await S.db.doc("config/main").set(next); toast("Gespeichert"); }catch(e){ toast(dbErr(e)); }
+}
+function uploadLogo(file){
+  if(!file) return;
+  const img = new Image(); const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const max=240, sc=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement("canvas"); c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    let data=c.toDataURL("image/png"); if(data.length>180000) data=c.toDataURL("image/webp",0.85);
+    URL.revokeObjectURL(url); saveConfig({logo:data});
+  };
+  img.onerror = () => toast("Bild konnte nicht gelesen werden");
+  img.src = url;
+}
+
+function groupModal(id){
+  const g = id ? S.groups[id] : {name:"",years:"",trainers:["","",""],days:[1,3],time:"18:00",duration:90,location:"Leichtathletikanlage Herti",color:GCOLORS[Object.keys(S.groups).length%GCOLORS.length],level:""};
+  const tr = [...(g.trainers||[])]; while(tr.length<3) tr.push("");
+  openModal(`
+  <div class="mh"><h3>${id?"Gruppe bearbeiten":"Neue Gruppe"}</h3><button class="x" data-close>×</button></div>
+  <div class="mb">
+    <div class="g2"><label class="f">Name der Gruppe<input type="text" id="gName" value="${esc(g.name)}" placeholder="z. B. U16"></label>
+    <label class="f">Jahrgänge<input type="text" id="gYears" value="${esc(g.years)}" placeholder="z. B. 2011/2012"></label></div>
+    <label class="f">Trainer (Namen)<div id="trList" style="display:flex;flex-direction:column;gap:6px">${tr.map(t=>`<input type="text" class="trIn" value="${esc(t)}" placeholder="Name Trainer/in">`).join("")}</div></label>
+    <div><button class="btn sm" id="trAdd">+ weiterer Trainer</button></div>
+    <label class="f">Trainingstage<div class="dayck">${D2.map((d,i)=>`<label><input type="checkbox" value="${i}" ${(g.days||[]).includes(i)?"checked":""}>${d}</label>`).join("")}</div></label>
+    <div class="g4"><label class="f">Startzeit<input type="time" id="gTime" value="${esc(g.time||"18:00")}"></label>
+    <label class="f">Dauer (Min.)<input type="number" id="gDur" min="15" step="15" value="${esc(g.duration||90)}"></label>
+    <label class="f" style="grid-column:span 2">Standard-Ort<input type="text" id="gLoc" value="${esc(g.location||"")}"></label></div>
+    <label class="f">Niveau / Hinweise für die KI<input type="text" id="gLevel" value="${esc(g.level||"")}" placeholder="z. B. ca. 15 Athletinnen und Athleten, gemischtes Niveau, Mehrkampf-orientiert"></label>
+    <label class="f">Farbe<div class="row">${GCOLORS.map(c=>`<label style="cursor:pointer"><input type="radio" name="gCol" value="${c}" ${g.color===c?"checked":""} hidden><span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:${c};outline:${g.color===c?"3px solid #0f1b2d":"none"};outline-offset:2px" class="colDot"></span></label>`).join("")}</div></label>
+  </div>
+  <div class="mf">${id?`<button class="btn danger" id="gDel" style="margin-right:auto">Gruppe löschen</button>`:""}
+    <button class="btn" data-close>Abbrechen</button><button class="btn pri" id="gSave">Speichern</button></div>`);
+  $("#modal").querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  $("#trAdd").onclick = () => { const i=document.createElement("input"); i.type="text"; i.className="trIn"; i.placeholder="Name Trainer/in"; $("#trList").append(i); i.focus(); };
+  $("#modal").querySelectorAll("input[name=gCol]").forEach(r=>r.onchange=()=>{ $("#modal").querySelectorAll(".colDot").forEach(d=>d.style.outline="none"); r.nextElementSibling.style.outline="3px solid #0f1b2d"; });
+  $("#gSave").onclick = async () => {
+    const name = $("#gName").value.trim(); if(!name){ toast("Bitte einen Namen eingeben"); return; }
+    const data = { name, years:$("#gYears").value.trim(),
+      trainers:[...document.querySelectorAll(".trIn")].map(i=>i.value.trim()).filter(Boolean),
+      days:[...document.querySelectorAll(".dayck input:checked")].map(i=>+i.value),
+      time:$("#gTime").value, duration:+$("#gDur").value||90, location:$("#gLoc").value.trim(), level:$("#gLevel").value.trim(),
+      color:(document.querySelector("input[name=gCol]:checked")||{}).value||GCOLORS[0], updatedAt:Date.now() };
+    const gid = id || (slug(name)+"-"+rid());
+    if(!id) data.createdAt = Date.now();
+    else data.createdAt = g.createdAt || Date.now();
+    $("#gSave").disabled = true;
+    try{ await S.db.doc("groups/"+gid).set(data); toast("Gruppe gespeichert"); closeModal(); }catch(e){ toast(dbErr(e)); $("#gSave").disabled=false; }
+  };
+  const del=$("#gDel"); if(del) del.onclick = async () => {
+    if(!del.classList.contains("armed")){ del.classList.add("armed"); del.textContent="Wirklich löschen? (Trainings bleiben gespeichert)"; return; }
+    try{ await S.db.doc("groups/"+id).delete(); toast("Gruppe gelöscht"); closeModal(); }catch(e){ toast(dbErr(e)); }
+  };
+}
+
+/* ================= GROUP / WEEK ================= */
+function renderGroup(){
+  const g = S.groups[S.gid]; if(!g) return;
+  const aiOk = S.sample !== null;
+  $("#app").innerHTML = `
+  <div class="hdr"><div><h2>${esc(g.name)}${g.years?` <span class="muted" style="font-size:20px">Jg. ${esc(g.years)}</span>`:""}</h2>
+    <div class="muted">Trainer: ${esc((g.trainers||[]).join(", ")||"–")}</div></div></div>
+  <div class="toolbar">
+    <div class="seg"><button data-mode="week" class="${S.mode==="week"?"on":""}">Woche</button><button data-mode="year" class="${S.mode==="year"?"on":""}">Jahr</button></div>
+    <div class="weeknav"><button id="wPrev" aria-label="Zurück">‹</button><span class="lbl" id="wLbl"></span><button id="wNext" aria-label="Weiter">›</button></div>
+    <button class="btn" id="wToday">Heute</button>
+    <div style="flex:1"></div>
+    ${S.mode==="week"?`<button class="btn" id="wCopy" title="Woche als Text kopieren">Als Text kopieren</button>
+    <button class="btn" id="wDup" title="Alle Trainings dieser Woche in die nächste Woche kopieren">Woche duplizieren →</button>`:""}
+    ${aiOk?`<button class="btn ai" id="wAI">✨ KI-Vorschlag</button>`:""}
+    <button class="btn pri" id="wNew">+ Training</button>
+  </div>
+  <div id="cal"></div>`;
+  document.querySelectorAll(".seg [data-mode]").forEach(b=>b.onclick=()=>{ S.mode=b.dataset.mode; try{ localStorage.setItem("lkz_mode",S.mode); }catch(e){} renderGroup(); });
+  $("#wPrev").onclick=()=>{ if(S.mode==="week") S.week=addDays(S.week,-7); else S.year--; renderCal(); };
+  $("#wNext").onclick=()=>{ if(S.mode==="week") S.week=addDays(S.week,7); else S.year++; renderCal(); };
+  $("#wToday").onclick=()=>{ S.week=monday(new Date()); S.year=new Date().getFullYear(); renderCal(); };
+  $("#wNew").onclick=()=>sessionModal(null,{date:iso(defaultDay())});
+  if(S.mode==="week"){ $("#wCopy").onclick=copyWeek; $("#wDup").onclick=dupWeek; }
+  if(aiOk) $("#wAI").onclick=aiModal;
+  renderCal();
+}
+function renderCal(){ if(S.mode==="year") renderYear(); else renderWeek(); }
+
+function renderYear(){
+  const box=$("#cal"); if(!box) return;
+  const g=S.groups[S.gid]||{}, Y=S.year, todayIso=iso(new Date());
+  $("#wLbl").textContent = `Jahr ${Y}`;
+  const byDate={}; for(const s of S.sessions){ if(s.date && s.date.startsWith(String(Y))) (byDate[s.date]=byDate[s.date]||[]).push(s); }
+  const total=Object.values(byDate).reduce((a,l)=>a+l.length,0);
+  let html=`<div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="legend"><span><i class="lg tr"></i>Trainingstag</span><span><i class="lg ho"></i>Schulferien Kanton Zug</span><span><i class="lg fr"></i>Schulfreier Tag</span><span><i class="lg se"></i>Training geplant</span></div><span class="muted" style="font-size:13px">${total} Training(s) im Jahr ${Y}</span></div><div class="year">`;
+  for(let m=0;m<12;m++){
+    const first=new Date(Y,m,1), lead=(first.getDay()+6)%7, dim=new Date(Y,m+1,0).getDate();
+    html+=`<div class="month card"><div class="mt">${MONTHS[m]}</div><div class="mg">${D2.slice(0,6).map(d=>`<div class="wd">${d}</div>`).join("")}`;
+    let col=0;
+    for(let i=0;i<(lead===6?0:lead);i++){ html+=`<div></div>`; col++; }
+    for(let d=1; d<=dim; d++){
+      const dt=new Date(Y,m,d), wd=(dt.getDay()+6)%7; if(wd===6) continue;
+      if(wd===0 && d!==1){ col=0; }
+      const di=iso(dt), hol=holidayOf(di), list=byDate[di]||[], tr=(g.days||[]).includes(wd);
+      const cls=["dc", tr?"tr":"", hol?(hol.free?"fr":"ho"):"", list.length?"se":"", di===todayIso?"td":""].join(" ");
+      const tip=[hol?hol.name:"", ...list.map(s=>`${s.time||""} ${s.title||"Training"}`)].filter(Boolean).join("\n");
+      html+=`<button class="${cls}" data-day="${di}" title="${esc(tip)}">${d}${list.length?`<i style="background:${FOCUS_COLORS[(list[0].foci||[])[0]]||"#0b4fa3"}"></i>`:""}</button>`;
+    }
+    html+=`</div></div>`;
+  }
+  box.innerHTML = html+`</div>`;
+  box.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>dayModal(b.dataset.day));
+}
+function dayModal(di){
+  const list=S.sessions.filter(s=>s.date===di).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+  const d=fromIso(di), hol=holidayOf(di);
+  if(!list.length && !hol){ sessionModal(null,{date:di}); return; }
+  openModal(`<div class="mh"><h3>${DAYS[(d.getDay()+6)%7]}, ${ch(d)}</h3><button class="x" data-close>×</button></div>
+  <div class="mb">${hol?`<div class="note warn">🏖️ ${esc(hol.name)} (Kanton Zug)</div>`:""}
+    ${list.length?list.map(s=>sessCard(s)).join(""):`<div class="muted">Noch kein Training an diesem Tag.</div>`}</div>
+  <div class="mf"><button class="btn" id="dWeek" style="margin-right:auto">Zur Woche</button><button class="btn" data-close>Schliessen</button><button class="btn pri" id="dNew">+ Training</button></div>`);
+  $("#modal").querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  $("#modal").querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>viewModal(b.dataset.s));
+  $("#dNew").onclick=()=>sessionModal(null,{date:di});
+  $("#dWeek").onclick=()=>{ closeModal(); S.week=monday(d); S.mode="week"; try{ localStorage.setItem("lkz_mode","week"); }catch(e){} renderGroup(); };
+}
+function defaultDay(){ const g=S.groups[S.gid]; const today=new Date(); const inWeek = today>=S.week && today<addDays(S.week,7); if(inWeek) return today; return addDays(S.week,(g?.days||[0])[0]||0); }
+function weekSessions(){ const a=iso(S.week), b=iso(addDays(S.week,6)); return S.sessions.filter(s=>s.date>=a && s.date<=b).sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time)); }
+
+function renderWeek(){
+  const cal=$("#cal"); if(!cal) return;
+  if(!$("#week")) cal.innerHTML=`<div class="week" id="week"></div>`;
+  const box=$("#week");
+  const g=S.groups[S.gid]||{};
+  $("#wLbl").textContent = `KW ${kw(S.week)} · ${chShort(S.week)} – ${ch(addDays(S.week,5))}`;
+  const ws=weekSessions(), todayIso=iso(new Date());
+  const sun=ws.filter(s=>s.date===iso(addDays(S.week,6)));
+  box.innerHTML = DAYS.slice(0,6).map((dn,i)=>{
+    const d=addDays(S.week,i), di=iso(d), list=ws.filter(s=>s.date===di), tr=(g.days||[]).includes(i), hol=holidayOf(di);
+    return `<div class="day ${tr?"train":""} ${di===todayIso?"today":""} ${hol?"hol":""}">
+      <div class="dh"><b>${dn}</b><span>${chShort(d)}</span></div>
+      ${hol?`<div class="hb">🏖️ ${esc(hol.name)}</div>`:""}
+      <div class="db">${list.map(s=>sessCard(s)).join("")}${i===5?sun.map(s=>sessCard(s)).join(""):""}
+        ${(tr||list.length===0)?`<button class="add" data-add="${di}">+ Training</button>`:""}</div></div>`;
+  }).join("");
+  if(!S.sessLoaded && !S.sessions.length) box.insertAdjacentHTML("afterbegin",`<div class="muted" style="grid-column:1/-1"><span class="spin"></span> Trainings laden…</div>`);
+  box.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>sessionModal(null,{date:b.dataset.add}));
+  box.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>viewModal(b.dataset.s));
+  fillNames();
+}
+function sessCard(s){
+  const col = FOCUS_COLORS[(s.foci||[])[0]] || "#0b4fa3";
+  const mins = (s.blocks||[]).reduce((a,b)=>a+(+b.min||0),0);
+  return `<button class="sess" data-s="${esc(s.id)}" style="border-left-color:${col}">
+    <div class="t">${esc(s.time||"")}${s.dur?` · ${esc(s.dur)} Min.`:""}${s.trainer?` · ${esc(s.trainer)}`:""}</div>
+    <div class="n">${esc(s.title||"Training")}</div>
+    ${(s.foci||[]).length?`<div class="chips">${s.foci.map(f=>`<span class="chip">${esc(f)}</span>`).join("")}</div>`:""}
+    ${(s.blocks||[]).length?`<div class="bl">${s.blocks.map(b=>esc(b.phase)+(b.min?` (${esc(b.min)}′)`:"")).join(" · ")}</div>`:""}
+    ${s.loc?`<div class="who">📍 ${esc(s.loc)}</div>`:""}
+  </button>`;
+}
+async function fillNames(){
+  document.querySelectorAll("[data-uid]").forEach(e=>{ const id=e.dataset.uid; const u=S.usersById[id]; e.textContent = id===S.me ? "dir" : ((u&&(u.name||u.username))||"jemandem"); });
+}
+
+/* ---------- session editor ---------- */
+function sessionModal(id, preset={}){
+  const g=S.groups[S.gid]||{};
+  const ex = id ? S.sessions.find(s=>s.id===id) : null;
+  const s = ex ? JSON.parse(JSON.stringify(ex)) : { date:preset.date||iso(new Date()), time:g.time||"18:00", dur:g.duration||90, loc:g.location||"", trainer:"", title:"", foci:[], blocks:[{phase:"Einlaufen",min:15,content:""},{phase:"Hauptteil",min:60,content:""},{phase:"Ausklang",min:15,content:""}], material:"", notes:"", ...preset };
+  const trainers = [...new Set([...(g.trainers||[]), ...groupUsers(S.gid).map(u=>u.name), s.trainer].filter(Boolean))];
+  openModal(`
+  <div class="mh"><h3>${ex?"Training bearbeiten":"Neues Training"}</h3><button class="x" data-close>×</button></div>
+  <div class="mb">
+    <div class="aibox">
+      <div class="row" style="justify-content:space-between"><b>✨ KI-Vorschlag</b><span class="muted" style="font-size:12px">Prompt kopieren, in Claude oder ChatGPT einfügen, Vorschlag hier übertragen</span></div>
+      <div class="row" style="flex-wrap:nowrap;align-items:stretch">
+        <input type="text" id="sWish" placeholder="Wunsch, z. B. «Hürdentechnik mit Spielform am Schluss» (optional)">
+        ${S.sample?`<button class="btn ai" id="sAI">Vorschlag</button>`:""}
+        <button class="btn" id="sPrompt" title="Prompt kopieren und im eigenen Claude-Chat einfügen">Prompt kopieren</button>
+      </div>
+      <div id="sAIMsg" class="muted" style="font-size:13px"></div>
+    </div>
+    <label class="f">Titel<input type="text" id="sTitle" value="${esc(s.title)}" placeholder="z. B. Sprint-Technik und Startübungen"></label>
+    <div class="g4"><label class="f">Datum<input type="date" id="sDate" value="${esc(s.date)}"></label>
+      <label class="f">Start<input type="time" id="sTime" value="${esc(s.time)}"></label>
+      <label class="f">Dauer (Min.)<input type="number" id="sDur" min="15" step="5" value="${esc(s.dur)}"></label>
+      <label class="f">Verantwortlich<select id="sTr"><option value="">–</option>${trainers.map(t=>`<option ${t===s.trainer?"selected":""}>${esc(t)}</option>`).join("")}</select></label></div>
+    <label class="f">Ort<input type="text" id="sLoc" value="${esc(s.loc)}"></label>
+    <label class="f">Schwerpunkte<div class="chips" id="sFoci">${FOCI.map(f=>`<button type="button" class="chip ${(s.foci||[]).includes(f)?"sel":""}" data-f="${esc(f)}">${esc(f)}</button>`).join("")}</div></label>
+    <div><div class="row" style="justify-content:space-between;margin-bottom:6px"><b style="font-size:14px">Ablauf</b><span class="tot" id="sTot"></span></div>
+      <div id="sBlocks" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="btn sm" id="bAdd" style="margin-top:8px">+ Block</button></div>
+    <div class="g2"><label class="f">Material<textarea id="sMat" placeholder="Hürden, Medizinbälle, Startblöcke…">${esc(s.material)}</textarea></label>
+      <label class="f">Notizen / Absprachen<textarea id="sNotes">${esc(s.notes)}</textarea></label></div>
+    ${ex&&ex.updatedBy?`<div class="who">Zuletzt geändert von <span data-uid="${esc(ex.updatedBy)}">…</span> am ${ch(new Date(ex.updatedAt||Date.now()))}</div>`:""}
+  </div>
+  <div class="mf">
+    ${ex?`<button class="btn" id="sView">Ansicht / PDF</button><button class="btn danger" id="sDel">Löschen</button><button class="btn" id="sDup" style="margin-right:auto">+7 Tage kopieren</button>`:""}
+    <button class="btn" data-close>Abbrechen</button><button class="btn pri" id="sSave">Speichern</button></div>`);
+  const m=$("#modal");
+  m.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  m.querySelectorAll("#sFoci .chip").forEach(c=>c.onclick=()=>c.classList.toggle("sel"));
+  let blocks = (s.blocks||[]).map(b=>({...b}));
+  const drawBlocks = () => {
+    $("#sBlocks").innerHTML = blocks.map((b,i)=>`<div class="block">
+      <select data-i="${i}" data-k="phase">${[...new Set([...PHASES,b.phase].filter(Boolean))].map(p=>`<option ${p===b.phase?"selected":""}>${esc(p)}</option>`).join("")}</select>
+      <input type="number" min="0" step="5" data-i="${i}" data-k="min" value="${esc(b.min)}" title="Minuten" placeholder="Min.">
+      <textarea data-i="${i}" data-k="content" placeholder="Stichworte, z. B. Skipping · Anfersen je 2x 20 m">${esc(b.content)}</textarea>
+      <button class="x" data-rm="${i}" title="Entfernen" style="font-size:20px">×</button></div>`).join("");
+    $("#sBlocks").querySelectorAll("[data-k]").forEach(el=>el.oninput=()=>{ blocks[+el.dataset.i][el.dataset.k] = el.dataset.k==="min" ? +el.value : el.value; tot(); });
+    $("#sBlocks").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ blocks.splice(+b.dataset.rm,1); drawBlocks(); });
+    tot();
+  };
+  const tot = () => { const t=blocks.reduce((a,b)=>a+(+b.min||0),0); $("#sTot").textContent = `Total ${t} Min.` + (t && +$("#sDur").value && t!==+$("#sDur").value ? ` (geplant ${$("#sDur").value})` : ""); };
+  $("#sDur").oninput = tot;
+  $("#bAdd").onclick = () => { blocks.push({phase:"Hauptteil",min:15,content:""}); drawBlocks(); };
+  drawBlocks();
+  const collect = () => ({ gid:S.gid, title:$("#sTitle").value.trim(), date:$("#sDate").value, time:$("#sTime").value, dur:+$("#sDur").value||0,
+    trainer:$("#sTr").value, loc:$("#sLoc").value.trim(), foci:[...m.querySelectorAll("#sFoci .chip.sel")].map(c=>c.dataset.f),
+    blocks:blocks.filter(b=>b.phase||b.content).map(b=>({phase:b.phase||"",min:+b.min||0,content:b.content||""})),
+    material:$("#sMat").value.trim(), notes:$("#sNotes").value.trim(), updatedBy:S.me, updatedAt:Date.now(),
+    createdBy: ex?.createdBy ?? S.me, createdAt: ex?.createdAt ?? Date.now() });
+  const editorPrompt = () => {
+    const d=collect(), dt=d.date?fromIso(d.date):new Date();
+    return singlePrompt({ date:dt, dur:d.dur||g.duration||90, loc:d.loc||g.location||"", foci:d.foci, wish:[$("#sWish").value.trim(), d.title?`Arbeitstitel: ${d.title}`:""].filter(Boolean).join(". ") });
+  };
+  $("#sPrompt").onclick = async () => {
+    const p = editorPrompt().replace(/Antworte nur mit JSON.*$/s,"Gib den Trainingsplan stichwortartig als kurze Liste aus: Phase, Minuten, Übungen in Stichworten. Keine ganzen Sätze.");
+    if(await copyText(p)) $("#sAIMsg").textContent="Prompt kopiert. In einem Claude-Chat einfügen und den Vorschlag hier übertragen.";
+    else { $("#sAIMsg").innerHTML=`<textarea style="min-height:120px">${esc(p)}</textarea>`; $("#sAIMsg textarea").select(); }
+  };
+  const aiBtn=$("#sAI"); if(aiBtn) aiBtn.onclick = async () => {
+    const msg=$("#sAIMsg"); aiBtn.disabled=true; msg.innerHTML=`<span class="spin"></span> Die KI erstellt einen Vorschlag… (bis zu einer Minute)`;
+    try{
+      const r = normAI(await S.sample.json(editorPrompt(),{cache:false}), +$("#sDur").value||90);
+      if(!r.blocks.length) throw {code:"invalid_json"};
+      $("#sTitle").value = r.title;
+      m.querySelectorAll("#sFoci .chip").forEach(c=>c.classList.toggle("sel", r.foci.includes(c.dataset.f)));
+      blocks = r.blocks; drawBlocks();
+      $("#sMat").value = r.material; $("#sNotes").value = r.notes;
+      msg.textContent = "Vorschlag übernommen. Bitte prüfen und anpassen, dann speichern.";
+    }catch(e){
+      const c=e&&e.code;
+      msg.textContent = (c==="not_granted"||c==="sampling_disabled") ? "Die KI ist für dein Konto hier nicht verfügbar. Nutze «Prompt kopieren»."
+        : c==="rate_limited" ? "Zu viele Anfragen, bitte später nochmals versuchen." : "Kein Vorschlag erhalten. Bitte nochmals versuchen oder «Prompt kopieren» nutzen.";
+    }finally{ aiBtn.disabled=false; }
+  };
+  $("#sSave").onclick = async () => {
+    const d=collect(); if(!d.date){ toast("Bitte Datum wählen"); return; }
+    $("#sSave").disabled=true;
+    try{ if(ex) await S.db.doc("sessions/"+ex.id).set(d); else await S.db.collection("sessions").add(d);
+      toast("Training gespeichert"); closeModal(); }catch(e){ toast(dbErr(e)); $("#sSave").disabled=false; }
+  };
+  if(ex){
+    $("#sView").onclick=()=>viewModal(ex.id);
+    const del=$("#sDel"); del.onclick = async () => {
+      if(!del.classList.contains("armed")){ del.classList.add("armed"); del.textContent="Wirklich löschen?"; return; }
+      try{ await S.db.doc("sessions/"+ex.id).delete(); toast("Training gelöscht"); closeModal(); }catch(e){ toast(dbErr(e)); }
+    };
+    $("#sDup").onclick = async () => {
+      const d=collect(); d.date=iso(addDays(fromIso(d.date),7)); d.createdBy=S.me; d.createdAt=Date.now();
+      try{ await S.db.collection("sessions").add(d); toast("Kopiert auf "+ch(fromIso(d.date))); closeModal(); }catch(e){ toast(dbErr(e)); }
+    };
+  }
+  fillNames();
+}
+
+
+/* ================= EINZELANSICHT & PDF ================= */
+function timeline(s){
+  let [hh,mm]=(s.time||"18:00").split(":").map(Number); if(isNaN(hh)){hh=18;mm=0;}
+  let t=hh*60+(mm||0); const f=x=>String(Math.floor(x/60)%24).padStart(2,"0")+":"+String(x%60).padStart(2,"0");
+  return (s.blocks||[]).map(b=>{ const a=t; t+=(+b.min||0); return {...b, from:f(a), to:f(t)}; });
+}
+function viewModal(id){
+  const s=S.sessions.find(x=>x.id===id); if(!s) return;
+  const g=S.groups[S.gid]||{}, d=fromIso(s.date), tl=timeline(s), hol=holidayOf(s.date);
+  const total=tl.reduce((a,b)=>a+(+b.min||0),0);
+  openModal(`
+  <div class="mh"><h3>Trainingsplan</h3><button class="x" data-close>×</button></div>
+  <div class="mb">
+    <div class="tp">
+      <div class="tp-head" style="--gc:${esc(g.color||"#0b4fa3")}">
+        <div class="tp-logo">${logoHtml()}</div>
+        <div class="tp-ht"><div class="tp-club">${esc(S.config.clubName||"LK Zug")} · ${esc(g.name||"")}${g.years?" · Jg. "+esc(g.years):""}</div>
+          <div class="tp-title">${esc(s.title||"Training")}</div>
+          ${(s.foci||[]).length?`<div class="chips" style="margin-top:6px">${s.foci.map(f=>`<span class="chip" style="background:${FOCUS_COLORS[f]||"#0b4fa3"};color:#fff">${esc(f)}</span>`).join("")}</div>`:""}</div>
+      </div>
+      <div class="tp-info">
+        <div><span>Datum</span><b>${DAYS[(d.getDay()+6)%7]}, ${ch(d)}</b></div>
+        <div><span>Zeit</span><b>${esc(s.time||"–")}${tl.length?" - "+tl[tl.length-1].to:""}</b></div>
+        <div><span>Dauer</span><b>${esc(s.dur||total)} Min.</b></div>
+        <div><span>Ort</span><b>${esc(s.loc||"–")}</b></div>
+        <div><span>Leitung</span><b>${esc(s.trainer||"–")}</b></div>
+      </div>
+      ${hol?`<div class="note warn" style="margin:0 0 10px">${esc(hol.name)} (Kanton Zug)</div>`:""}
+      <table class="tp-tab"><thead><tr><th>Zeit</th><th>Phase</th><th>Min.</th><th>Inhalt und Übungen</th></tr></thead>
+      <tbody>${tl.length?tl.map(b=>`<tr><td class="nw">${b.from}<br><span class="muted">${b.to}</span></td><td><b>${esc(b.phase)}</b></td><td class="nw">${esc(b.min||"")}</td><td class="pre">${esc(b.content)}</td></tr>`).join(""):`<tr><td colspan="4" class="muted">Kein Ablauf erfasst.</td></tr>`}</tbody>
+      ${tl.length?`<tfoot><tr><td></td><td>Total</td><td class="nw">${total}</td><td></td></tr></tfoot>`:""}</table>
+      ${(s.material||s.notes)?`<div class="tp-foot">${s.material?`<div><span>Material</span><p class="pre">${esc(s.material)}</p></div>`:""}${s.notes?`<div><span>Notizen</span><p class="pre">${esc(s.notes)}</p></div>`:""}</div>`:""}
+    </div>
+  </div>
+  <div class="mf"><span id="pdfMsg" class="muted" style="margin-right:auto;font-size:13px"></span>
+    <button class="btn" id="vEdit">Bearbeiten</button><button class="btn pri" id="vPdf">Als PDF speichern</button></div>`);
+  $("#modal").querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  $("#vEdit").onclick=()=>sessionModal(id);
+  $("#vPdf").onclick=()=>exportPdf(s);
+}
+
+function hexRgb(h){ const m=/^#?([0-9a-f]{6})$/i.exec(h||""); if(!m) return [11,79,163]; const n=parseInt(m[1],16); return [n>>16,(n>>8)&255,n&255]; }
+function pdfSafe(t){ return String(t||"").replace(/[‘’]/g,"'").replace(/[“”„]/g,'"').replace(/[–—]/g,"-").replace(/…/g,"...").replace(/[^\x09\x0A\x0D\x20-\x7E -ÿ€]/g,""); }
+function buildPdf(s){
+  const { jsPDF } = window.jspdf;
+  const g=S.groups[S.gid]||{}, d=fromIso(s.date), tl=timeline(s), hol=holidayOf(s.date);
+  const total=tl.reduce((a,b)=>a+(+b.min||0),0);
+  const W=210, H=297, M=14, CW=W-2*M, gc=hexRgb(g.color), blue=[11,79,163];
+  const render = (doc, fs, draw) => {
+    const lh = fs*0.42;  // mm pro Zeile
+    let y=M;
+    // Kopf
+    if(draw){ doc.setFillColor(...blue); doc.rect(0,0,W,34,"F"); doc.setFillColor(255,255,255); doc.roundedRect(M,5,22,24,2,2,"F");
+      const logo=S.config.logo||DEFAULT_LOGO; if(logo){ try{ const fmt=/^data:image\/png/.test(logo)?"PNG":"JPEG"; doc.addImage(logo,fmt,M+1.5,6,19,22); }catch(e){} }
+      doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(9);
+      doc.text(pdfSafe(`${(S.config.clubName||"LK Zug").toUpperCase()}  ·  ${g.name||""}${g.years?"  ·  Jg. "+g.years:""}`), M+27, 12);
+      doc.setFontSize(17); doc.text(doc.splitTextToSize(pdfSafe(s.title||"Training"), CW-27-2)[0], M+27, 21);
+      doc.setFont("helvetica","normal"); doc.setFontSize(9);
+      if((s.foci||[]).length) doc.text(pdfSafe("Schwerpunkte: "+s.foci.join(", ")), M+27, 28);
+    }
+    y=40;
+    // Infozeile
+    const info=[["Datum",`${DAYS[(d.getDay()+6)%7]}, ${ch(d)}`],["Zeit",`${s.time||"-"}${tl.length?" - "+tl[tl.length-1].to:""}`],["Dauer",`${s.dur||total} Min.`],["Ort",s.loc||"-"],["Leitung",s.trainer||"-"]];
+    const iw=[38,28,20,58,CW-38-28-20-58];
+    if(draw){ doc.setDrawColor(221,227,236); doc.setFillColor(246,248,251); doc.roundedRect(M,y,CW,14,2,2,"FD");
+      let x=M+3; info.forEach(([l,v],i)=>{ doc.setFontSize(7); doc.setTextColor(93,107,128); doc.setFont("helvetica","normal"); doc.text(l.toUpperCase(),x,y+5);
+        doc.setFontSize(9.5); doc.setTextColor(15,27,45); doc.setFont("helvetica","bold"); doc.text(doc.splitTextToSize(pdfSafe(v),iw[i]-3)[0],x,y+10.5); x+=iw[i]; }); }
+    y+=18;
+    if(hol){ if(draw){ doc.setFillColor(255,241,199); doc.roundedRect(M,y,CW,7,1.5,1.5,"F"); doc.setFontSize(8.5); doc.setTextColor(107,74,0); doc.setFont("helvetica","bold"); doc.text(pdfSafe(`${hol.name} (Kanton Zug)`),M+3,y+4.8); } y+=10; }
+    // Tabelle
+    const cw=[22,34,12,CW-22-34-12], pad=2.2;
+    if(draw){ doc.setFillColor(232,240,251); doc.rect(M,y,CW,7,"F"); doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.setTextColor(8,59,123);
+      ["ZEIT","PHASE","MIN.","INHALT UND ÜBUNGEN"].forEach((t,i)=>doc.text(t, M+cw.slice(0,i).reduce((a,b)=>a+b,0)+pad, y+4.8)); }
+    y+=7;
+    doc.setFontSize(fs);
+    tl.forEach((b,ri)=>{
+      doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+      const lines=doc.splitTextToSize(pdfSafe(b.content||""), cw[3]-2*pad);
+      doc.setFont("helvetica","bold"); const ph=doc.splitTextToSize(pdfSafe(b.phase||""), cw[1]-2*pad);
+      const rh=Math.max(lines.length, ph.length, 2)*lh + 2*pad;
+      if(draw){
+        if(ri%2===1){ doc.setFillColor(250,251,253); doc.rect(M,y,CW,rh,"F"); }
+        doc.setFillColor(...gc); doc.rect(M,y,1.2,rh,"F");
+        doc.setDrawColor(221,227,236); doc.line(M,y+rh,M+CW,y+rh);
+        const ty=y+pad+lh*0.8;
+        doc.setTextColor(15,27,45); doc.setFont("helvetica","bold"); doc.text(b.from, M+pad+0.5, ty);
+        doc.setFont("helvetica","normal"); doc.setTextColor(93,107,128); doc.text(b.to, M+pad+0.5, ty+lh);
+        doc.setTextColor(15,27,45); doc.setFont("helvetica","bold"); doc.text(ph, M+cw[0]+pad, ty);
+        doc.setFont("helvetica","normal"); doc.text(String(b.min||""), M+cw[0]+cw[1]+pad, ty);
+        doc.text(lines, M+cw[0]+cw[1]+cw[2]+pad, ty);
+      }
+      y+=rh;
+    });
+    if(tl.length){ if(draw){ doc.setFont("helvetica","bold"); doc.setFontSize(fs); doc.setTextColor(15,27,45); doc.text("Total", M+cw[0]+pad, y+5); doc.text(String(total)+" Min.", M+cw[0]+cw[1]+pad, y+5); } y+=8; }
+    // Material / Notizen
+    const boxes=[["Material",s.material],["Notizen",s.notes]].filter(x=>x[1]);
+    if(boxes.length){
+      y+=3; const bw=boxes.length===2?(CW-4)/2:CW;
+      doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+      const ls=boxes.map(b=>doc.splitTextToSize(pdfSafe(b[1]), bw-6));
+      const bh=Math.max(...ls.map(l=>l.length))*lh+10;
+      if(draw) boxes.forEach((b,i)=>{ const x=M+i*(bw+4); doc.setDrawColor(221,227,236); doc.setFillColor(246,248,251); doc.roundedRect(x,y,bw,bh,2,2,"FD");
+        doc.setFontSize(7); doc.setTextColor(93,107,128); doc.setFont("helvetica","bold"); doc.text(b[0].toUpperCase(),x+3,y+5);
+        doc.setFontSize(fs); doc.setTextColor(15,27,45); doc.setFont("helvetica","normal"); doc.text(ls[i],x+3,y+5+lh+1); });
+      y+=bh;
+    }
+    if(draw){ doc.setFontSize(7); doc.setTextColor(140,150,165); doc.setFont("helvetica","normal");
+      doc.text(pdfSafe(`${S.config.clubName||"LK Zug"} Trainingsplaner · erstellt am ${ch(new Date())}`), M, H-8); }
+    return y;
+  };
+  let fs=10.5; const probe=new jsPDF({unit:"mm",format:"a4"});
+  while(fs>6.5 && render(probe,fs,false) > H-14) fs-=0.5;
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  doc.setProperties({title:pdfSafe(`Trainingsplan ${g.name||""} ${ch(d)}`)});
+  render(doc,fs,true);
+  return doc;
+}
+async function exportPdf(s){
+  const msg=$("#pdfMsg");
+  if(!window.jspdf){ msg.textContent="PDF-Modul konnte nicht geladen werden."; return; }
+  const g=S.groups[S.gid]||{};
+  let doc; try{ doc=buildPdf(s); }catch(e){ console.warn(e); msg.textContent="PDF konnte nicht erstellt werden."; return; }
+  const name=`Trainingsplan_${slug(g.name||"gruppe").toUpperCase()}_${s.date}.pdf`;
+  try{ doc.save(name); msg.textContent="PDF heruntergeladen."; }catch(e){ msg.textContent="Download nicht möglich."; }
+}
+
+/* ---------- week tools ---------- */
+function weekText(){
+  const g=S.groups[S.gid]||{}; const ws=weekSessions();
+  let t = `${S.config.clubName||"LK Zug"} · Trainingsplan ${g.name||""}\nKW ${kw(S.week)} (${chShort(S.week)} – ${ch(addDays(S.week,6))})\n`;
+  if(!ws.length) return t+"\nKeine Trainings geplant.";
+  for(const s of ws){
+    const d=fromIso(s.date);
+    t += `\n${DAYS[(d.getDay()+6)%7]}, ${ch(d)}, ${s.time||""}${s.dur?` (${s.dur} Min.)`:""}${s.loc?`, ${s.loc}`:""}\n${s.title||"Training"}${s.trainer?` · Leitung: ${s.trainer}`:""}\n`;
+    if((s.foci||[]).length) t += `Schwerpunkte: ${s.foci.join(", ")}\n`;
+    for(const b of s.blocks||[]) t += `- ${b.phase}${b.min?` (${b.min} Min.)`:""}: ${b.content.replace(/\n+/g," / ")}\n`;
+    if(s.material) t += `Material: ${s.material}\n`;
+    if(s.notes) t += `Notizen: ${s.notes}\n`;
+  }
+  return t;
+}
+async function copyWeek(){
+  const t=weekText();
+  if(await copyText(t)) return;
+  openModal(`<div class="mh"><h3>Woche als Text</h3><button class="x" data-close>×</button></div><div class="mb"><textarea style="min-height:320px" id="wt">${esc(t)}</textarea></div><div class="mf"><button class="btn pri" data-close>Schliessen</button></div>`);
+  $("#modal").querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal); $("#wt").select();
+}
+async function dupWeek(){
+  const ws=weekSessions(); if(!ws.length){ toast("Diese Woche hat keine Trainings"); return; }
+  const btn=$("#wDup"); if(!btn.classList.contains("armed")){ btn.classList.add("armed","danger"); btn.textContent=`${ws.length} Training(s) in KW ${kw(addDays(S.week,7))} kopieren?`; setTimeout(()=>{ if(btn.isConnected){ btn.classList.remove("armed","danger"); btn.textContent="Woche duplizieren →"; } },5000); return; }
+  btn.disabled=true;
+  try{ for(const s of ws){ const {id, ...d}=s; d.date=iso(addDays(fromIso(s.date),7)); d.createdBy=S.me; d.updatedBy=S.me; d.createdAt=d.updatedAt=Date.now(); await S.db.collection("sessions").add(d); }
+    toast("Woche dupliziert"); S.week=addDays(S.week,7); renderGroup(); }catch(e){ toast(dbErr(e)); btn.disabled=false; }
+}
+
+/* ================= KI ================= */
+let aiCtl=null;
+function aiModal(){
+  const g=S.groups[S.gid]||{};
+  openModal(`
+  <div class="mh"><h3>✨ KI-Vorschlag für ${esc(g.name||"die Gruppe")}</h3><button class="x" data-close>×</button></div>
+  <div class="mb">
+    <div class="row"><button type="button" class="chip sel" data-mode="single">Einzeltraining</button><button type="button" class="chip" data-mode="week">Ganze Woche (${esc((g.days||[]).map(i=>D2[i]).join(", ")||"Trainingstage")})</button></div>
+    <label class="f">Schwerpunkte<div class="chips" id="aFoci">${FOCI.map(f=>`<button type="button" class="chip" data-f="${esc(f)}">${esc(f)}</button>`).join("")}</div></label>
+    <div class="g4">
+      <label class="f" style="grid-column:span 2">Saisonphase<select id="aSeason">${SEASON.map(x=>`<option ${x===guessSeason()?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
+      <label class="f">Dauer (Min.)<input type="number" id="aDur" value="${esc(g.duration||90)}" step="15"></label>
+      <label class="f">Anz. Athleten<input type="number" id="aN" value="15" min="1"></label>
+    </div>
+    <div class="g2"><label class="f">Ort / Infrastruktur<select id="aLoc"><option>Turnhalle</option><option>Leichtathletikstadion</option><option>Stadion und Halle</option><option>Wald / Gelände</option></select></label>
+      <label class="f" id="aDayWrap">Für welchen Tag<input type="date" id="aDate" value="${iso(defaultDay())}"></label></div>
+    <label class="f">Weitere Wünsche<textarea id="aWish" placeholder="z. B. Vorbereitung auf den UBS Kids Cup, viel Spielformen, 2 Athleten mit Knieproblemen schonen…"></textarea></label>
+    <div id="aOut" class="aiout"></div>
+  </div>
+  <div class="mf"><span class="muted" style="margin-right:auto;font-size:13px">Vorschläge immer fachlich prüfen.</span>
+    <button class="btn" data-close>Schliessen</button><button class="btn ai" id="aGo">Vorschlag erstellen</button></div>`);
+  const m=$("#modal"); let mode="single";
+  m.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  m.querySelectorAll("#aFoci .chip").forEach(c=>c.onclick=()=>c.classList.toggle("sel"));
+  m.querySelectorAll("[data-mode]").forEach(c=>c.onclick=()=>{ mode=c.dataset.mode; m.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("sel",x===c)); $("#aDayWrap").style.visibility = mode==="single"?"visible":"hidden"; });
+  $("#aGo").onclick = () => runAI(mode);
+}
+function singlePrompt({date,dur,loc,foci,wish}){
+  const g=S.groups[S.gid]||{};
+  const recent = S.sessions.filter(s=>s.date<iso(date)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4)
+    .map(s=>`${ch(fromIso(s.date))}: ${s.title} (${(s.foci||[]).join(", ")})`).join("; ");
+  const hol=holidayOf(iso(date));
+  return `Du bist ein erfahrener Leichtathletik-Nachwuchstrainer in der Schweiz (Swiss Athletics, J+S-Grundsätze).
+Erstelle einen Vorschlag für ein Training des Vereins ${S.config.clubName||"LK Zug"}, Gruppe ${g.name||"U16"}${g.years?` (Jahrgänge ${g.years})`:""}.
+Datum: ${DAYS[(date.getDay()+6)%7]}, ${ch(date)}${hol?` (${hol.name}, evtl. weniger Athleten)`:""}. Dauer: ${dur} Minuten. Ort: ${loc||"nicht angegeben"}. Saisonphase: ${guessSeason(date)}.
+${g.level?`Gruppenhinweise: ${g.level}\n`:""}Schwerpunkte: ${foci&&foci.length?foci.join(", "):"vielseitig, nach deiner Einschätzung"}.
+${wish?`Wunsch des Trainers: ${wish}\n`:""}${recent?`Letzte Trainings (Abwechslung beachten): ${recent}\n`:""}
+Regeln: altersgerecht (vielseitig, Technik vor Intensität, Kraft mit Körpergewicht oder leichten Geräten, Spielformen erlaubt), die Summe der Minuten entspricht ${dur}. STIL: rein stichwortartig, möglichst wenig Text, keine ganzen Sätze, keine Erklärungen. Beispiel für content: "Skipping · Anfersen · Hopserlauf je 2x 20 m". Titel max. 5 Wörter. Schweizer Hochdeutsch, kein ß, keine Gedankenstriche.
+Antworte nur mit JSON in dieser Form: {"title": string, "foci": string[] (nur aus: ${FOCI.join(", ")}), "blocks": [{"phase": string (eines von: ${PHASES.join(", ")}), "min": number, "content": string (nur Stichworte, Übungen mit " · " getrennt, inkl. Wdh./Distanz, max. 12 Wörter)}], "material": string (Stichworte, kommagetrennt), "notes": string (max. 1 kurzer Stichwortsatz oder leer)}`;
+}
+function guessSeason(d){ const mo=(d||new Date()).getMonth()+1; if(mo>=9&&mo<=10) return "Grundlagen (Herbst)"; if(mo>=11||mo===12) return "Wintervorbereitung"; if(mo<=2) return "Hallensaison"; if(mo<=4) return "Vorbereitung Sommer"; if(mo<=8) return "Wettkampfsaison"; return "Grundlagen (Herbst)"; }
+
+async function runAI(mode){
+  const g=S.groups[S.gid]||{};
+  const foci=[...document.querySelectorAll("#aFoci .chip.sel")].map(c=>c.dataset.f);
+  const dur=+$("#aDur").value||90, n=+$("#aN").value||15;
+  const tdays=(g.days||[]).map(i=>DAYS[i]);
+  if(mode==="week" && !tdays.length){ toast("Für die Gruppe sind keine Trainingstage hinterlegt"); return; }
+  const recent = S.sessions.filter(s=>s.date<iso(S.week)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4)
+    .map(s=>`${ch(fromIso(s.date))}: ${s.title} (${(s.foci||[]).join(", ")})`).join("; ");
+  const blockSchema = `{"title": string, "foci": string[] (nur aus: ${FOCI.join(", ")}), "blocks": [{"phase": string (eines von: ${PHASES.join(", ")}), "min": number, "content": string (nur Stichworte, Übungen mit " · " getrennt, inkl. Wdh./Distanz, max. 12 Wörter)}], "material": string (Stichworte, kommagetrennt), "notes": string (max. 1 kurzer Stichwortsatz oder leer)}`;
+  const prompt = `Du bist ein erfahrener Leichtathletik-Nachwuchstrainer in der Schweiz (Swiss Athletics, J+S-Grundsätze).
+Erstelle einen Trainingsvorschlag für den Verein ${S.config.clubName||"LK Zug"}, Gruppe ${g.name||"U16"}${g.years?` (Jahrgänge ${g.years})`:""}.
+Rahmen: ca. ${n} Athletinnen und Athleten, ${dur} Minuten pro Training, Ort: ${$("#aLoc").value}, Saisonphase: ${$("#aSeason").value}.
+${g.level?`Gruppenhinweise: ${g.level}\n`:""}Schwerpunkte: ${foci.length?foci.join(", "):"vielseitig, nach deiner Einschätzung"}.
+${$("#aWish").value.trim()?`Wünsche der Trainer: ${$("#aWish").value.trim()}\n`:""}${recent?`Letzte Trainings (Abwechslung beachten): ${recent}\n`:""}
+Regeln: altersgerecht für U16 (vielseitig, Technik vor Intensität, Kraft mit Körpergewicht oder leichten Geräten, Spielformen erlaubt), die Summe der Minuten pro Training entspricht ${dur}. STIL: rein stichwortartig, möglichst wenig Text, keine ganzen Sätze, keine Erklärungen. Beispiel für content: "Skipping · Anfersen · Hopserlauf je 2x 20 m". Titel max. 5 Wörter. Schweizer Hochdeutsch, kein ß, keine Gedankenstriche.
+${mode==="week"
+  ? `Plane eine Trainingswoche mit je einem Training an diesen Tagen: ${tdays.join(", ")}. Die Trainings ergänzen sich sinnvoll.
+Antworte nur mit JSON: {"sessions": [{"day": string (Wochentag wie oben), ${blockSchema.slice(1)}]}`
+  : `Antworte nur mit JSON in dieser Form: ${blockSchema}`}`;
+  const out=$("#aOut"), go=$("#aGo");
+  out.innerHTML=`<div class="note"><span class="spin"></span> Die KI erstellt den Vorschlag… (das kann bis zu einer Minute dauern) <button class="btn sm" id="aStop" style="margin-left:8px">Stopp</button></div>`;
+  go.disabled=true; aiCtl=new AbortController(); $("#aStop").onclick=()=>aiCtl.abort();
+  try{
+    const res = await S.sample.json(prompt,{signal:aiCtl.signal, cache:false});
+    let list = mode==="week" ? (res && Array.isArray(res.sessions) ? res.sessions : []) : [res];
+    list = list.filter(x=>x && typeof x==="object").map(x=>normAI(x,dur));
+    if(!list.length) throw {code:"invalid_json"};
+    showAI(list, mode);
+  }catch(e){
+    const c=e&&e.code;
+    if(c==="cancelled"){ out.innerHTML=""; }
+    else if(c==="not_granted"||c==="sampling_disabled"){ out.innerHTML=`<div class="note warn">Die KI ist für dieses Konto nicht freigegeben.</div>`; }
+    else if(c==="rate_limited"){ out.innerHTML=`<div class="note warn">Zu viele Anfragen. Bitte später nochmals versuchen.</div>`; }
+    else { out.innerHTML=`<div class="note warn">Der Vorschlag konnte nicht erstellt werden. Bitte nochmals versuchen.</div>`; }
+  }finally{ go.disabled=false; }
+}
+function normAI(x,dur){
+  return { day:String(x.day||""), title:String(x.title||"Training"), foci:(Array.isArray(x.foci)?x.foci:[]).map(String).filter(f=>FOCI.includes(f)),
+    blocks:(Array.isArray(x.blocks)?x.blocks:[]).map(b=>({phase:String(b.phase||"Hauptteil"),min:+b.min||0,content:String(b.content||"")})),
+    material:String(x.material||""), notes:String(x.notes||""), dur };
+}
+function showAI(list, mode){
+  const out=$("#aOut");
+  out.innerHTML = list.map((s,i)=>`<div class="aic">
+    <div class="row" style="justify-content:space-between"><h4>${mode==="week"?esc(s.day)+": ":""}${esc(s.title)}</h4><button class="btn sm pri" data-take="${i}">Übernehmen & bearbeiten</button></div>
+    <div class="chips">${s.foci.map(f=>`<span class="chip">${esc(f)}</span>`).join("")}</div>
+    <ol>${s.blocks.map(b=>`<li><b>${esc(b.phase)}</b>${b.min?` (${b.min} Min.)`:""}: ${esc(b.content)}</li>`).join("")}</ol>
+    ${s.material?`<div style="font-size:13px"><b>Material:</b> ${esc(s.material)}</div>`:""}
+    ${s.notes?`<div style="font-size:13px"><b>Hinweise:</b> ${esc(s.notes)}</div>`:""}
+  </div>`).join("") + (mode==="week"?`<div class="row" style="justify-content:flex-end"><button class="btn pri" id="aAll">Alle ${list.length} Trainings in KW ${kw(S.week)} speichern</button></div>`:"");
+  const dateFor = s => { if(mode==="single") return $("#aDate").value || iso(defaultDay()); const i=DAYS.findIndex(d=>s.day.toLowerCase().startsWith(d.toLowerCase().slice(0,2))); return iso(addDays(S.week, i<0?0:i)); };
+  const g=S.groups[S.gid]||{};
+  const toSess = s => ({ gid:S.gid, date:dateFor(s), time:g.time||"18:00", dur:s.dur, loc:g.location||"", trainer:"", title:s.title, foci:s.foci, blocks:s.blocks, material:s.material, notes:s.notes });
+  out.querySelectorAll("[data-take]").forEach(b=>b.onclick=()=>{ const s=list[+b.dataset.take]; const p=toSess(s); delete p.gid; sessionModal(null,p); });
+  const all=$("#aAll"); if(all) all.onclick = async () => {
+    all.disabled=true;
+    try{ for(const s of list){ const d=toSess(s); d.createdBy=d.updatedBy=S.me; d.createdAt=d.updatedAt=Date.now(); await S.db.collection("sessions").add(d); }
+      toast("Wochenplan gespeichert"); closeModal(); }catch(e){ toast(dbErr(e)); all.disabled=false; }
+  };
+}
+</script>
+</body>
+</html>

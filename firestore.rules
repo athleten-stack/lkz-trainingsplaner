@@ -1,0 +1,54 @@
+rules_version = '2';
+// Sicherheitsregeln für den LK Zug Trainingsplaner
+// Admins sehen und verwalten alles. Trainer sehen nur ihre zugeteilten Jahrgänge.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function userPath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function me() { return get(userPath()).data; }
+    function active() { return signedIn() && exists(userPath()) && me().active == true; }
+    function isAdmin() { return active() && me().role == 'admin'; }
+    function inGroup(gid) { return active() && gid in me().groups; }
+    function setupDone() { return exists(/databases/$(database)/documents/config/setup); }
+
+    // Merker, ob das erste Admin-Konto schon erstellt wurde
+    match /config/setup {
+      allow read: if true;
+      allow create: if signedIn() && !setupDone()
+        && getAfter(userPath()).data.role == 'admin';
+      allow update, delete: if false;
+    }
+
+    // Vereinseinstellungen (Name, Logo)
+    match /config/main {
+      allow read: if active();
+      allow write: if isAdmin();
+    }
+
+    // Logins / Profile
+    match /users/{uid} {
+      allow read: if active() || (signedIn() && request.auth.uid == uid);
+      allow create: if isAdmin()
+        || (signedIn() && request.auth.uid == uid && !setupDone()
+            && request.resource.data.role == 'admin'
+            && request.resource.data.active == true
+            && existsAfter(/databases/$(database)/documents/config/setup));
+      allow update, delete: if isAdmin();
+    }
+
+    // Jahrgänge / Trainingsgruppen
+    match /groups/{gid} {
+      allow read: if isAdmin() || inGroup(gid);
+      allow write: if isAdmin();
+    }
+
+    // Trainings
+    match /sessions/{sid} {
+      allow read: if isAdmin() || inGroup(resource.data.gid);
+      allow create: if isAdmin() || inGroup(request.resource.data.gid);
+      allow update: if isAdmin() || (inGroup(resource.data.gid) && inGroup(request.resource.data.gid));
+      allow delete: if isAdmin() || inGroup(resource.data.gid);
+    }
+  }
+}
