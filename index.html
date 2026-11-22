@@ -97,7 +97,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #9cbcec;border-color:v
 @media (max-width:640px){.g2,.g4{grid-template-columns:1fr 1fr}}
 .block{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;grid-template-columns:170px 80px 1fr 30px;gap:8px;align-items:start;background:#fafbfd}
 @media (max-width:640px){.block{grid-template-columns:1fr 80px 30px}.block textarea{grid-column:1/-1;grid-row:2}}
-.block textarea{min-height:54px}
+.block textarea{min-height:60px;overflow:hidden;resize:none;line-height:1.4}
 .tot{font-size:13px;color:var(--muted)}
 .dayck{display:flex;gap:6px;flex-wrap:wrap}
 .dayck label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:5px 9px;cursor:pointer;font-weight:600;font-size:14px}
@@ -237,8 +237,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid #9cbcec;border-color:v
   .dc{height:38px;font-size:14px}
   .legend{gap:8px;font-size:12px}
   /* Fenster als Vollbild mit fixer Kopf- und Fusszeile */
-  .ov{padding:0;align-items:stretch}
-  .modal{max-width:none;min-height:100%;border-radius:0;display:flex;flex-direction:column}
+  .ov{padding:0;background:#fff}
+  .ov.on{display:block}
+  .modal{max-width:none;min-height:100vh;min-height:100dvh;height:auto;border-radius:0;display:flex;flex-direction:column;box-shadow:none}
   .modal .mh{position:sticky;top:0;background:#fff;z-index:2;padding:12px 14px}
   .modal .mh h3{font-size:20px}
   .modal .mb{padding:14px;flex:1}
@@ -340,6 +341,25 @@ const FREEDAYS = {
   "2027-11-01":"Allerheiligen","2027-12-08":"Mariä Empfängnis","2028-04-14":"Karfreitag","2028-06-05":"Pfingstmontag","2028-06-15":"Fronleichnam"
 };
 function holidayOf(d){ if(FREEDAYS[d]) return {name:FREEDAYS[d],free:true}; for(const h of HOLIDAYS) if(d>=h[0]&&d<=h[1]) return {name:h[2],free:false}; return null; }
+const LOCATIONS = ["Leichtathletikanlage","Loreto","Kraftraum","Stadthalle","Oym"];
+/* Ort-Auswahl: Dropdown mit festen Orten, bei «Sonstiges» freies Textfeld */
+function autoGrow(t){ t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"; }
+/* Feld beim Antippen in die Mitte holen, damit Tastatur und fixe Fusszeile es nicht verdecken */
+document.addEventListener("focusin", e=>{
+  const t=e.target; if(!t.closest || !t.closest(".modal")) return;
+  if(!/^(TEXTAREA|INPUT|SELECT)$/.test(t.tagName)) return;
+  if(window.innerWidth<=700) setTimeout(()=>t.scrollIntoView({block:"center",behavior:"smooth"}),300);
+});
+document.addEventListener("input", e=>{ const t=e.target; if(t.tagName==="TEXTAREA" && t.closest(".modal")) autoGrow(t); });
+function locField(id, value, label){
+  const v=String(value||"").trim();
+  const known = LOCATIONS.find(o=>v===o) || LOCATIONS.find(o=>v && v.toLowerCase().startsWith(o.toLowerCase()));
+  const other = v && !known;
+  return `<label class="f">${label}<select id="${id}Sel">${LOCATIONS.map(o=>`<option ${o===known?"selected":""}>${o}</option>`).join("")}<option value="__other" ${other?"selected":""}>Sonstiges …</option></select>
+    <input type="text" id="${id}Txt" value="${esc(other?v:"")}" placeholder="Ort eingeben" ${other?"":"hidden"} style="margin-top:6px"></label>`;
+}
+function bindLoc(id){ const s=$("#"+id+"Sel"), t=$("#"+id+"Txt"); s.onchange=()=>{ t.hidden = s.value!=="__other"; if(!t.hidden) t.focus(); }; }
+function locValue(id){ const s=$("#"+id+"Sel"); return s.value==="__other" ? $("#"+id+"Txt").value.trim() : s.value; }
 const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 const GCOLORS = ["#0b4fa3","#d9480f","#2b8a3e","#862e9c","#0b7285","#c92a2a","#e67700"];
 
@@ -827,7 +847,7 @@ function uploadLogo(file){
 }
 
 function groupModal(id){
-  const g = id ? S.groups[id] : {name:"",years:"",trainers:["","",""],days:[1,3],time:"18:00",duration:90,location:"Leichtathletikanlage Herti",color:GCOLORS[Object.keys(S.groups).length%GCOLORS.length],level:""};
+  const g = id ? S.groups[id] : {name:"",years:"",trainers:["","",""],days:[1,3],time:"18:00",duration:90,location:"Leichtathletikanlage",color:GCOLORS[Object.keys(S.groups).length%GCOLORS.length],level:""};
   const tr = [...(g.trainers||[])]; while(tr.length<3) tr.push("");
   openModal(`
   <div class="mh"><h3>${id?"Gruppe bearbeiten":"Neue Gruppe"}</h3><button class="x" data-close>×</button></div>
@@ -839,13 +859,14 @@ function groupModal(id){
     <label class="f">Trainingstage<div class="dayck">${D2.map((d,i)=>`<label><input type="checkbox" value="${i}" ${(g.days||[]).includes(i)?"checked":""}>${d}</label>`).join("")}</div></label>
     <div class="g4"><label class="f">Startzeit<input type="time" id="gTime" value="${esc(g.time||"18:00")}"></label>
     <label class="f">Dauer (Min.)<input type="number" id="gDur" min="15" step="15" value="${esc(g.duration||90)}"></label>
-    <label class="f" style="grid-column:span 2">Standard-Ort<input type="text" id="gLoc" value="${esc(g.location||"")}"></label></div>
+    <div style="grid-column:span 2">${locField("gLoc", g.location, "Standard-Ort")}</div></div>
     <label class="f">Niveau / Hinweise für die KI<input type="text" id="gLevel" value="${esc(g.level||"")}" placeholder="z. B. ca. 15 Athletinnen und Athleten, gemischtes Niveau, Mehrkampf-orientiert"></label>
     <label class="f">Farbe<div class="row">${GCOLORS.map(c=>`<label style="cursor:pointer"><input type="radio" name="gCol" value="${c}" ${g.color===c?"checked":""} hidden><span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:${c};outline:${g.color===c?"3px solid #0f1b2d":"none"};outline-offset:2px" class="colDot"></span></label>`).join("")}</div></label>
   </div>
   <div class="mf">${id?`<button class="btn danger" id="gDel" style="margin-right:auto">Gruppe löschen</button>`:""}
     <button class="btn" data-close>Abbrechen</button><button class="btn pri" id="gSave">Speichern</button></div>`);
   $("#modal").querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  bindLoc("gLoc");
   $("#trAdd").onclick = () => { const i=document.createElement("input"); i.type="text"; i.className="trIn"; i.placeholder="Name Trainer/in"; $("#trList").append(i); i.focus(); };
   $("#modal").querySelectorAll("input[name=gCol]").forEach(r=>r.onchange=()=>{ $("#modal").querySelectorAll(".colDot").forEach(d=>d.style.outline="none"); r.nextElementSibling.style.outline="3px solid #0f1b2d"; });
   $("#gSave").onclick = async () => {
@@ -853,7 +874,7 @@ function groupModal(id){
     const data = { name, years:$("#gYears").value.trim(),
       trainers:[...document.querySelectorAll(".trIn")].map(i=>i.value.trim()).filter(Boolean),
       days:[...document.querySelectorAll(".dayck input:checked")].map(i=>+i.value),
-      time:$("#gTime").value, duration:+$("#gDur").value||90, location:$("#gLoc").value.trim(), level:$("#gLevel").value.trim(),
+      time:$("#gTime").value, duration:+$("#gDur").value||90, location:locValue("gLoc"), level:$("#gLevel").value.trim(),
       color:(document.querySelector("input[name=gCol]:checked")||{}).value||GCOLORS[0], updatedAt:Date.now() };
     const gid = id || (slug(name)+"-"+rid());
     if(!id) data.createdAt = Date.now();
@@ -1001,7 +1022,7 @@ function sessionModal(id, preset={}){
       <label class="f">Start<input type="time" id="sTime" value="${esc(s.time)}"></label>
       <label class="f">Dauer (Min.)<input type="number" id="sDur" min="15" step="5" value="${esc(s.dur)}"></label>
       <label class="f">Verantwortlich<select id="sTr"><option value="">–</option>${trainers.map(t=>`<option ${t===s.trainer?"selected":""}>${esc(t)}</option>`).join("")}</select></label></div>
-    <label class="f">Ort<input type="text" id="sLoc" value="${esc(s.loc)}"></label>
+    ${locField("sLoc", s.loc, "Ort")}
     <label class="f">Schwerpunkte<div class="chips" id="sFoci">${FOCI.map(f=>`<button type="button" class="chip ${(s.foci||[]).includes(f)?"sel":""}" data-f="${esc(f)}">${esc(f)}</button>`).join("")}</div></label>
     <div><div class="row" style="justify-content:space-between;margin-bottom:6px"><b style="font-size:14px">Ablauf</b><span class="tot" id="sTot"></span></div>
       <div id="sBlocks" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -1016,6 +1037,7 @@ function sessionModal(id, preset={}){
   const m=$("#modal");
   m.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
   m.querySelectorAll("#sFoci .chip").forEach(c=>c.onclick=()=>c.classList.toggle("sel"));
+  bindLoc("sLoc");
   let blocks = (s.blocks||[]).map(b=>({...b}));
   const drawBlocks = () => {
     $("#sBlocks").innerHTML = blocks.map((b,i)=>`<div class="block">
@@ -1023,7 +1045,8 @@ function sessionModal(id, preset={}){
       <input type="number" min="0" step="5" data-i="${i}" data-k="min" value="${esc(b.min)}" title="Minuten" placeholder="Min.">
       <textarea data-i="${i}" data-k="content" placeholder="Stichworte, z. B. Skipping · Anfersen je 2x 20 m">${esc(b.content)}</textarea>
       <button class="x" data-rm="${i}" title="Entfernen" style="font-size:20px">×</button></div>`).join("");
-    $("#sBlocks").querySelectorAll("[data-k]").forEach(el=>el.oninput=()=>{ blocks[+el.dataset.i][el.dataset.k] = el.dataset.k==="min" ? +el.value : el.value; tot(); });
+    $("#sBlocks").querySelectorAll("[data-k]").forEach(el=>el.oninput=()=>{ blocks[+el.dataset.i][el.dataset.k] = el.dataset.k==="min" ? +el.value : el.value; if(el.tagName==="TEXTAREA") autoGrow(el); tot(); });
+    $("#sBlocks").querySelectorAll("textarea").forEach(autoGrow);
     $("#sBlocks").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ blocks.splice(+b.dataset.rm,1); drawBlocks(); });
     tot();
   };
@@ -1031,8 +1054,9 @@ function sessionModal(id, preset={}){
   $("#sDur").oninput = tot;
   $("#bAdd").onclick = () => { blocks.push({phase:"Hauptteil",min:15,content:""}); drawBlocks(); };
   drawBlocks();
+  ["#sMat","#sNotes"].forEach(sel=>{ const t=$(sel); if(t) autoGrow(t); });
   const collect = () => ({ gid:S.gid, title:$("#sTitle").value.trim(), date:$("#sDate").value, time:$("#sTime").value, dur:+$("#sDur").value||0,
-    trainer:$("#sTr").value, loc:$("#sLoc").value.trim(), foci:[...m.querySelectorAll("#sFoci .chip.sel")].map(c=>c.dataset.f),
+    trainer:$("#sTr").value, loc:locValue("sLoc"), foci:[...m.querySelectorAll("#sFoci .chip.sel")].map(c=>c.dataset.f),
     blocks:blocks.filter(b=>b.phase||b.content).map(b=>({phase:b.phase||"",min:+b.min||0,content:b.content||""})),
     material:$("#sMat").value.trim(), notes:$("#sNotes").value.trim(), updatedBy:S.me, updatedAt:Date.now(),
     createdBy: ex?.createdBy ?? S.me, createdAt: ex?.createdAt ?? Date.now() });
