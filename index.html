@@ -191,6 +191,99 @@ input:focus,select:focus,textarea:focus{outline:2px solid #9cbcec;border-color:v
 .utab tr:last-child td{border-bottom:0}
 .utab tr.off td{opacity:.55}
 .pend{padding:16px;border-left:5px solid #f0b400}
+
+/* ===== Handy / schmale Bildschirme ===== */
+@media (max-width:700px){
+  html,body{overflow-x:hidden;font-size:15px}
+  input[type=text],input[type=password],input[type=date],input[type=time],input[type=number],select,textarea{font-size:16px}
+  .lg-only{display:none}
+  main{padding:12px 12px 90px}
+  .top .in{padding:8px 12px;gap:8px}
+  .logo{width:38px;height:38px;border-radius:8px}
+  .brand b{font-size:18px}
+  .brand span{font-size:12px;max-width:44vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #rolePill,#adminBtn{display:none!important}
+  .top .btn.sm{padding:6px 9px;font-size:13px}
+  #acctBtn{max-width:120px;overflow:hidden;text-overflow:ellipsis;display:inline-block}
+  .hdr{margin-bottom:12px}
+  .hdr h2{font-size:24px}
+  .hero{flex-direction:column;text-align:center;gap:10px;padding:18px}
+  .hero-logo{width:84px;height:94px}
+  .hero h1{font-size:30px}
+  .hero .row{justify-content:center}
+  .tiles{grid-template-columns:1fr;gap:10px}
+  .tile{padding:14px 16px}
+  .tn{font-size:32px}
+  .grid-groups{grid-template-columns:1fr}
+  .toolbar{gap:6px}
+  .toolbar>div[style*="flex:1"]{display:none}
+  .seg{order:1}
+  .weeknav{order:3;width:100%;justify-content:space-between}
+  .weeknav .lbl{min-width:0;font-size:14px;padding:0 4px}
+  .weeknav button{padding:8px 14px;font-size:18px}
+  #wToday{order:2}
+  #wCopy,#wDup,#wAI{order:2;padding:8px 11px}
+  #wNew{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;border-radius:99px;padding:14px 20px;font-size:16px;box-shadow:0 6px 20px rgba(11,79,163,.45)}
+  .week{grid-template-columns:1fr;gap:8px}
+  .day{min-height:0}
+  .day.nosess:not(.train):not(.today){display:none}
+  .day.nosess .db{flex-direction:row}
+  .day.nosess .add{flex:1}
+  .day .dh{padding:8px 12px}
+  .sess{padding:10px 12px}
+  .sess .n{font-size:16px}
+  .sess .bl{-webkit-line-clamp:2}
+  .year{grid-template-columns:1fr}
+  .dc{height:38px;font-size:14px}
+  .legend{gap:8px;font-size:12px}
+  /* Fenster als Vollbild mit fixer Kopf- und Fusszeile */
+  .ov{padding:0;align-items:stretch}
+  .modal{max-width:none;min-height:100%;border-radius:0;display:flex;flex-direction:column}
+  .modal .mh{position:sticky;top:0;background:#fff;z-index:2;padding:12px 14px}
+  .modal .mh h3{font-size:20px}
+  .modal .mb{padding:14px;flex:1}
+  .modal .mf{position:sticky;bottom:0;background:#fff;z-index:2;padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 12px rgba(15,27,45,.06)}
+  .modal .mf .btn{flex:1;justify-content:center;padding:11px 10px}
+  .modal .mf>span{flex-basis:100%;order:-1}
+  .modal .mf [style*="margin-right:auto"]{margin-right:0!important}
+  .aibox .row{flex-wrap:wrap!important}
+  .aibox input{flex-basis:100%}
+  .aibox .btn{flex:1;justify-content:center}
+  .g2{grid-template-columns:1fr}
+  .g4{grid-template-columns:1fr 1fr}
+  .g4 label[style*="span 2"]{grid-column:1/-1}
+  .block{grid-template-columns:1fr 70px 30px;padding:8px}
+  button.chip{font-size:14px;padding:7px 11px}
+  .dayck label{padding:7px 10px}
+  /* Trainingsansicht: Ablauf als Karten */
+  .tp-head{padding:12px}
+  .tp-logo{width:44px;height:50px}
+  .tp-title{font-size:22px}
+  .tp-info{grid-template-columns:1fr 1fr;padding:10px 12px}
+  .tp-info>div:nth-child(4){grid-column:1/-1}
+  .tp-tab thead{display:none}
+  .tp-tab tbody tr,.tp-tab tfoot tr{display:grid;grid-template-columns:auto 1fr auto;column-gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .tp-tab td{padding:0;border:0;background:none!important}
+  .tp-tab td:nth-child(1){grid-row:1;font-weight:700}
+  .tp-tab td:nth-child(1) br{display:none}
+  .tp-tab td:nth-child(1) .muted::before{content:" - "}
+  .tp-tab td:nth-child(2){grid-row:1}
+  .tp-tab td:nth-child(3){grid-row:1;color:var(--muted)}
+  .tp-tab td:nth-child(3)::after{content:" Min."}
+  .tp-tab td:nth-child(4){grid-column:1/-1;margin-top:4px}
+  .tp-tab tfoot td:nth-child(3)::after{content:" Min."}
+  .tp-foot{grid-template-columns:1fr;padding:10px 12px}
+  /* Verwaltung */
+  .setgrid{grid-template-columns:1fr;justify-items:start}
+  .linkbox input{min-width:0}
+  .utab thead{display:none}
+  .utab tr{display:grid;grid-template-columns:1fr auto;column-gap:10px;row-gap:3px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .utab td{padding:0;border:0}
+  .utab td:nth-child(6){grid-column:2;grid-row:1/span 3;align-self:center}
+  .utab td:nth-child(3),.utab td:nth-child(5){font-size:13px;color:var(--muted)}
+  .login{margin:3vh auto;padding:20px}
+  .toast{bottom:90px;max-width:90vw;text-align:center}
+}
 </style>
 </head>
 <body>
@@ -786,13 +879,13 @@ function renderGroup(){
     <div class="weeknav"><button id="wPrev" aria-label="Zurück">‹</button><span class="lbl" id="wLbl"></span><button id="wNext" aria-label="Weiter">›</button></div>
     <button class="btn" id="wToday">Heute</button>
     <div style="flex:1"></div>
-    ${S.mode==="week"?`<button class="btn" id="wCopy" title="Woche als Text kopieren">Als Text kopieren</button>
-    <button class="btn" id="wDup" title="Alle Trainings dieser Woche in die nächste Woche kopieren">Woche duplizieren →</button>`:""}
+    ${S.mode==="week"?`<button class="btn" id="wCopy" title="Woche als Text kopieren">📋<span class="lg-only"> Als Text kopieren</span></button>
+    <button class="btn" id="wDup" title="Alle Trainings dieser Woche in die nächste Woche kopieren">⧉<span class="lg-only"> Woche duplizieren →</span></button>`:""}
     ${aiOk?`<button class="btn ai" id="wAI">✨ KI-Vorschlag</button>`:""}
     <button class="btn pri" id="wNew">+ Training</button>
   </div>
   <div id="cal"></div>`;
-  document.querySelectorAll(".seg [data-mode]").forEach(b=>b.onclick=()=>{ S.mode=b.dataset.mode; try{ localStorage.setItem("lkz_mode",S.mode); }catch(e){} renderGroup(); });
+  document.querySelectorAll(".seg [data-mode]").forEach(b=>b.onclick=()=>{ S.mode=b.dataset.mode; S._yearScrolled=null; try{ localStorage.setItem("lkz_mode",S.mode); }catch(e){} renderGroup(); });
   $("#wPrev").onclick=()=>{ if(S.mode==="week") S.week=addDays(S.week,-7); else S.year--; renderCal(); };
   $("#wNext").onclick=()=>{ if(S.mode==="week") S.week=addDays(S.week,7); else S.year++; renderCal(); };
   $("#wToday").onclick=()=>{ S.week=monday(new Date()); S.year=new Date().getFullYear(); renderCal(); };
@@ -812,7 +905,7 @@ function renderYear(){
   let html=`<div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="legend"><span><i class="lg tr"></i>Trainingstag</span><span><i class="lg ho"></i>Schulferien Kanton Zug</span><span><i class="lg fr"></i>Schulfreier Tag</span><span><i class="lg se"></i>Training geplant</span></div><span class="muted" style="font-size:13px">${total} Training(s) im Jahr ${Y}</span></div><div class="year">`;
   for(let m=0;m<12;m++){
     const first=new Date(Y,m,1), lead=(first.getDay()+6)%7, dim=new Date(Y,m+1,0).getDate();
-    html+=`<div class="month card"><div class="mt">${MONTHS[m]}</div><div class="mg">${D2.slice(0,6).map(d=>`<div class="wd">${d}</div>`).join("")}`;
+    html+=`<div class="month card" id="mon-${m}"><div class="mt">${MONTHS[m]}</div><div class="mg">${D2.slice(0,6).map(d=>`<div class="wd">${d}</div>`).join("")}`;
     let col=0;
     for(let i=0;i<(lead===6?0:lead);i++){ html+=`<div></div>`; col++; }
     for(let d=1; d<=dim; d++){
@@ -827,6 +920,8 @@ function renderYear(){
   }
   box.innerHTML = html+`</div>`;
   box.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>dayModal(b.dataset.day));
+  if(S._yearScrolled!==Y){ S._yearScrolled=Y; const now=new Date();
+    if(window.innerWidth<=700 && Y===now.getFullYear()){ const el=$("#mon-"+now.getMonth()); if(el) setTimeout(()=>el.scrollIntoView({block:"start"}),50); } }
 }
 function dayModal(di){
   const list=S.sessions.filter(s=>s.date===di).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
@@ -854,7 +949,7 @@ function renderWeek(){
   const sun=ws.filter(s=>s.date===iso(addDays(S.week,6)));
   box.innerHTML = DAYS.slice(0,6).map((dn,i)=>{
     const d=addDays(S.week,i), di=iso(d), list=ws.filter(s=>s.date===di), tr=(g.days||[]).includes(i), hol=holidayOf(di);
-    return `<div class="day ${tr?"train":""} ${di===todayIso?"today":""} ${hol?"hol":""}">
+    return `<div class="day ${tr?"train":""} ${di===todayIso?"today":""} ${hol?"hol":""} ${list.length||(i===5&&sun.length)?"":"nosess"}">
       <div class="dh"><b>${dn}</b><span>${chShort(d)}</span></div>
       ${hol?`<div class="hb">🏖️ ${esc(hol.name)}</div>`:""}
       <div class="db">${list.map(s=>sessCard(s)).join("")}${i===5?sun.map(s=>sessCard(s)).join(""):""}
@@ -1150,7 +1245,7 @@ async function copyWeek(){
 }
 async function dupWeek(){
   const ws=weekSessions(); if(!ws.length){ toast("Diese Woche hat keine Trainings"); return; }
-  const btn=$("#wDup"); if(!btn.classList.contains("armed")){ btn.classList.add("armed","danger"); btn.textContent=`${ws.length} Training(s) in KW ${kw(addDays(S.week,7))} kopieren?`; setTimeout(()=>{ if(btn.isConnected){ btn.classList.remove("armed","danger"); btn.textContent="Woche duplizieren →"; } },5000); return; }
+  const btn=$("#wDup"); if(!btn.classList.contains("armed")){ btn.classList.add("armed","danger"); btn.textContent=`${ws.length} Training(s) in KW ${kw(addDays(S.week,7))} kopieren?`; setTimeout(()=>{ if(btn.isConnected){ btn.classList.remove("armed","danger"); btn.innerHTML='⧉<span class="lg-only"> Woche duplizieren →</span>'; } },5000); return; }
   btn.disabled=true;
   try{ for(const s of ws){ const {id, ...d}=s; d.date=iso(addDays(fromIso(s.date),7)); d.createdBy=S.me; d.updatedBy=S.me; d.createdAt=d.updatedAt=Date.now(); await S.db.collection("sessions").add(d); }
     toast("Woche dupliziert"); S.week=addDays(S.week,7); renderGroup(); }catch(e){ toast(dbErr(e)); btn.disabled=false; }
